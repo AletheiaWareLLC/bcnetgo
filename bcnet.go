@@ -26,6 +26,8 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"os/user"
 	"path"
 	"time"
 )
@@ -56,6 +58,18 @@ func HTTPSRedirect(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println("Redirecting to", target)
 	http.Redirect(w, r, target, http.StatusTemporaryRedirect)
+}
+
+func GetSecurityStore() (string, error) {
+	store, ok := os.LookupEnv("SECURITYSTORE")
+	if !ok {
+		u, err := user.Current()
+		if err != nil {
+			return "", err
+		}
+		store = path.Join(u.HomeDir, "bc")
+	}
+	return store, nil
 }
 
 type KeyStore struct {
