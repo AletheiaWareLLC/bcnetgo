@@ -174,16 +174,6 @@ func HandleStatic(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleStatus(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
-	switch r.Method {
-	case "GET":
-		// TODO
-	default:
-		log.Println("Unsupported method", r.Method)
-	}
-}
-
 func HandleBlock(conn net.Conn) {
 	defer conn.Close()
 	reader := bufio.NewReader(conn)
