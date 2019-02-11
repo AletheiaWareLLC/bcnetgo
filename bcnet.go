@@ -183,7 +183,9 @@ func HandleBlock(conn net.Conn) {
 		log.Println(err)
 		return
 	}
-	log.Println("Block Request", request)
+	blockHash := base64.RawURLEncoding.EncodeToString(request.BlockHash)
+	recordHash := base64.RawURLEncoding.EncodeToString(request.RecordHash)
+	log.Println("Block Request", request.ChannelName, blockHash, recordHash)
 	channel := request.ChannelName
 	c, err := bcgo.OpenChannel(channel)
 	if err != nil {
@@ -248,7 +250,7 @@ func HandleHead(conn net.Conn) {
 		log.Println(err)
 		return
 	}
-	log.Println("Head Request", request)
+	log.Println("Head Request", request.ChannelName)
 	channel := request.ChannelName
 	c, err := bcgo.OpenChannel(channel)
 	if err != nil {
@@ -260,7 +262,46 @@ func HandleHead(conn net.Conn) {
 		log.Println(err)
 		return
 	}
-	log.Println("Head Response", reference)
+	blockHash := base64.RawURLEncoding.EncodeToString(request.BlockHash)
+	log.Println("Head Response", reference.ChannelName, blockHash)
+	if err := bcgo.WriteReference(writer, reference); err != nil {
+		log.Println(err)
+		return
+	}
+}
+
+func HandleUpdate(conn net.Conn) {
+	defer conn.Close()
+	reader := bufio.NewReader(conn)
+	writer := bufio.NewWriter(conn)
+	block, err := bcgo.ReadBlock(reader)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	data, err := proto.Marshal(block)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	channel := block.ChannelName
+	hash := bcgo.Hash(data)
+	log.Println("Block Update", channel, base64.RawURLEncoding.EncodeToString(hash))
+	c, err := bcgo.OpenChannel(channel)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	if err := c.Update(hash, block); err != nil {
+		log.Println(err)
+		// return - Must send head reference back
+	}
+	reference := &Reference{
+		Timestamp:   c.HeadBlock.Timestamp,
+		ChannelName: c.Name,
+		BlockHash:   c.HeadHash,
+	}
+	// Reply with current head
 	if err := bcgo.WriteReference(writer, reference); err != nil {
 		log.Println(err)
 		return
