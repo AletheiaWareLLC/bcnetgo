@@ -417,7 +417,7 @@ func HandleUpdate(conn net.Conn) {
 	channel := block.ChannelName
 	hash := bcgo.Hash(data)
 	log.Println("Block Update", channel, base64.RawURLEncoding.EncodeToString(hash))
-	c, err := bcgo.OpenChannel(channel)
+	c, err := bcgo.OpenAndSyncChannel(channel)
 	if err != nil {
 		log.Println(err)
 		return
