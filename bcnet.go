@@ -135,6 +135,11 @@ func HandleAlias(w http.ResponseWriter, r *http.Request) {
 		signatureAlgorithm := r.Form["signatureAlgorithm"]
 		log.Println("SignatureAlgorithm", signatureAlgorithm)
 
+		if a[0] == "" {
+			log.Println("Empty Alias")
+			return
+		}
+
 		if err := aliasgo.UniqueAlias(aliases, a[0]); err != nil {
 			log.Println(err)
 			return
