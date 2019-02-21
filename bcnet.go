@@ -202,7 +202,7 @@ func HandleAlias(w http.ResponseWriter, r *http.Request) {
 			log.Println(err)
 			return
 		}
-		if err := aliases.Multicast(hash, block); err != nil {
+		if err := aliases.Cast(hash, block); err != nil {
 			log.Println(err)
 			return
 		}
@@ -405,7 +405,7 @@ func HandleHead(conn net.Conn) {
 	}
 }
 
-func HandleUpdate(conn net.Conn) {
+func HandleCast(conn net.Conn) {
 	defer conn.Close()
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
@@ -421,7 +421,7 @@ func HandleUpdate(conn net.Conn) {
 	}
 	channel := block.ChannelName
 	hash := bcgo.Hash(data)
-	log.Println("Block Update", channel, base64.RawURLEncoding.EncodeToString(hash))
+	log.Println("Block Cast", channel, base64.RawURLEncoding.EncodeToString(hash))
 	c, err := bcgo.OpenChannel(channel)
 	if err != nil {
 		log.Println(err)
