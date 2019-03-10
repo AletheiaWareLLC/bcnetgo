@@ -320,7 +320,7 @@ func HandleBlock(conn net.Conn) {
 	}
 	blockHash := base64.RawURLEncoding.EncodeToString(request.BlockHash)
 	recordHash := base64.RawURLEncoding.EncodeToString(request.RecordHash)
-	log.Println("Block Request", request.ChannelName, blockHash, recordHash)
+	log.Println("Block Request", conn.RemoteAddr(), request.ChannelName, blockHash, recordHash)
 	channel := request.ChannelName
 	c, err := bcgo.OpenChannel(channel)
 	if err != nil {
@@ -385,7 +385,7 @@ func HandleHead(conn net.Conn) {
 		log.Println(err)
 		return
 	}
-	log.Println("Head Request", request.ChannelName)
+	log.Println("Head Request", conn.RemoteAddr(), request.ChannelName)
 	channel := request.ChannelName
 	c, err := bcgo.OpenChannel(channel)
 	if err != nil {
@@ -414,6 +414,8 @@ func HandleCast(conn net.Conn) {
 		log.Println(err)
 		return
 	}
+	// TODO only accept casts from registered customers
+	// TODO only accept casts in allowed channels
 	data, err := proto.Marshal(block)
 	if err != nil {
 		log.Println(err)
@@ -421,7 +423,7 @@ func HandleCast(conn net.Conn) {
 	}
 	channel := block.ChannelName
 	hash := bcgo.Hash(data)
-	log.Println("Block Cast", channel, base64.RawURLEncoding.EncodeToString(hash))
+	log.Println("Block Cast", conn.RemoteAddr(), channel, base64.RawURLEncoding.EncodeToString(hash))
 	c, err := bcgo.OpenChannel(channel)
 	if err != nil {
 		log.Println(err)
