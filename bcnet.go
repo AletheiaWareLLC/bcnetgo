@@ -25,6 +25,7 @@ import (
 	"github.com/AletheiaWareLLC/bcgo"
 	"github.com/golang/protobuf/proto"
 	"html/template"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -72,6 +73,27 @@ func GetSecurityStore() (string, error) {
 		store = path.Join(u.HomeDir, "bc")
 	}
 	return store, nil
+}
+
+func SetupLogging() (*os.File, error) {
+	store, ok := os.LookupEnv("LOGSTORE")
+	if !ok {
+		u, err := user.Current()
+		if err != nil {
+			return nil, err
+		}
+		store = path.Join(u.HomeDir, "bc", "logs")
+	}
+	if err := os.MkdirAll(store, os.ModePerm); err != nil {
+		return nil, err
+	}
+	logFile, err := os.OpenFile(path.Join(store, time.Now().Format(time.RFC3339)), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		return nil, err
+	}
+	log.SetOutput(io.MultiWriter(os.Stdout, logFile))
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	return logFile, nil
 }
 
 type KeyStore struct {
@@ -397,7 +419,7 @@ func HandleHead(conn net.Conn) {
 		log.Println(err)
 		return
 	}
-	blockHash := base64.RawURLEncoding.EncodeToString(request.BlockHash)
+	blockHash := base64.RawURLEncoding.EncodeToString(reference.BlockHash)
 	log.Println("Head Response", reference.ChannelName, blockHash)
 	if err := bcgo.WriteReference(writer, reference); err != nil {
 		log.Println(err)
