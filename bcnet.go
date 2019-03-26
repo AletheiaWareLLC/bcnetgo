@@ -455,14 +455,16 @@ func HandleCast(conn net.Conn) {
 		log.Println(err)
 		// return - Must send head reference back
 	}
-	reference := &bcgo.Reference{
-		Timestamp:   c.HeadBlock.Timestamp,
-		ChannelName: c.Name,
-		BlockHash:   c.HeadHash,
-	}
-	// Reply with current head
-	if err := bcgo.WriteReference(writer, reference); err != nil {
-		log.Println(err)
-		return
+	if c.HeadBlock != nil {
+		reference := &bcgo.Reference{
+			Timestamp:   c.HeadBlock.Timestamp,
+			ChannelName: c.Name,
+			BlockHash:   c.HeadHash,
+		}
+		// Reply with current head
+		if err := bcgo.WriteReference(writer, reference); err != nil {
+			log.Println(err)
+			return
+		}
 	}
 }
