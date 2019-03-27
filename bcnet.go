@@ -110,14 +110,58 @@ func HandleAlias(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		query := r.URL.Query()
-		var a string
+		var alias string
 		if results, ok := query["alias"]; ok && len(results) == 1 {
-			a = results[0]
+			alias = results[0]
 		}
-		log.Println("Alias", a)
-		if err := aliasgo.UniqueAlias(aliases, a); err != nil {
+		log.Println("Alias", alias)
+		r, a, err := aliasgo.GetAliasRecord(aliases, alias)
+		if err != nil {
 			log.Println(err)
-			// TODO warn user
+			return
+		}
+		t, err := template.ParseFiles("html/template/alias.html")
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		data := struct {
+			Alias     string
+			Timestamp string
+			PublicKey string
+		}{
+			Alias:     alias,
+			Timestamp: bcgo.TimestampToString(r.Timestamp),
+			PublicKey: base64.RawURLEncoding.EncodeToString(a.PublicKey),
+		}
+		log.Println("Data", data)
+		err = t.Execute(w, data)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+	default:
+		log.Println("Unsupported method", r.Method)
+	}
+}
+
+func HandleAliasRegister(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
+	aliases, err := aliasgo.OpenAliasChannel()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	switch r.Method {
+	case "GET":
+		query := r.URL.Query()
+		var alias string
+		if results, ok := query["alias"]; ok && len(results) == 1 {
+			alias = results[0]
+		}
+		log.Println("Alias", alias)
+		if err := aliasgo.UniqueAlias(aliases, alias); err != nil {
+			log.Println(err)
 			return
 		}
 		var publicKey string
@@ -125,7 +169,7 @@ func HandleAlias(w http.ResponseWriter, r *http.Request) {
 			publicKey = results[0]
 		}
 		log.Println("PublicKey", publicKey)
-		t, err := template.ParseFiles("html/template/alias.html")
+		t, err := template.ParseFiles("html/template/alias-register.html")
 		if err != nil {
 			log.Println(err)
 			return
@@ -134,7 +178,7 @@ func HandleAlias(w http.ResponseWriter, r *http.Request) {
 			Alias     string
 			PublicKey string
 		}{
-			Alias:     a,
+			Alias:     alias,
 			PublicKey: publicKey,
 		}
 		log.Println("Data", data)
@@ -146,8 +190,8 @@ func HandleAlias(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		r.ParseForm()
 		log.Println("Request", r)
-		a := r.Form["alias"]
-		log.Println("Alias", a)
+		alias := r.Form["alias"]
+		log.Println("Alias", alias)
 		publicKey := r.Form["publicKey"]
 		log.Println("PublicKey", publicKey)
 		publicKeyFormat := r.Form["publicKeyFormat"]
@@ -157,12 +201,12 @@ func HandleAlias(w http.ResponseWriter, r *http.Request) {
 		signatureAlgorithm := r.Form["signatureAlgorithm"]
 		log.Println("SignatureAlgorithm", signatureAlgorithm)
 
-		if a[0] == "" {
+		if alias[0] == "" {
 			log.Println("Empty Alias")
 			return
 		}
 
-		if err := aliasgo.UniqueAlias(aliases, a[0]); err != nil {
+		if err := aliasgo.UniqueAlias(aliases, alias[0]); err != nil {
 			log.Println(err)
 			return
 		}
@@ -193,7 +237,7 @@ func HandleAlias(w http.ResponseWriter, r *http.Request) {
 		}
 		sigAlg := bcgo.SignatureAlgorithm(sigAlgValue)
 
-		record, err := aliasgo.CreateAliasRecord(a[0], pubKey, pubFormat, sig, sigAlg)
+		record, err := aliasgo.CreateAliasRecord(alias[0], pubKey, pubFormat, sig, sigAlg)
 		if err != nil {
 			log.Println(err)
 			return
@@ -227,6 +271,179 @@ func HandleAlias(w http.ResponseWriter, r *http.Request) {
 		if err := aliases.Cast(hash, block); err != nil {
 			log.Println(err)
 			return
+		}
+	default:
+		log.Println("Unsupported method", r.Method)
+	}
+}
+
+func HandleBlock(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
+	switch r.Method {
+	case "GET":
+		query := r.URL.Query()
+		var channel string
+		if results, ok := query["channel"]; ok && len(results) == 1 {
+			channel = results[0]
+		}
+		log.Println("Channel", channel)
+		var hash string
+		if results, ok := query["hash"]; ok && len(results) == 1 {
+			hash = results[0]
+		}
+		log.Println("Hash", hash)
+		if len(channel) > 0 && len(hash) > 0 {
+			c, err := bcgo.OpenChannel(channel)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			hashBytes, err := base64.RawURLEncoding.DecodeString(hash)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			// Read from cache
+			block, err := bcgo.ReadBlockFile(c.Cache, hashBytes)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			t, err := template.ParseFiles("html/template/block.html")
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			type TemplateReference struct {
+				Timestamp  string
+				Channel    string
+				BlockHash  string
+				RecordHash string
+			}
+			type TemplateAccess struct {
+				Alias               string
+				SecretKey           string
+				EncryptionAlgorithm string
+			}
+			type TemplateEntry struct {
+				Hash                 string
+				Timestamp            string
+				Creator              string
+				Access               []TemplateAccess
+				Payload              string
+				CompressionAlgorithm string
+				EncryptionAlgorithm  string
+				Signature            string
+				SignatureAlgorithm   string
+				Reference            []TemplateReference
+			}
+			entries := make([]TemplateEntry, 0)
+			for _, e := range block.Entry {
+				accesses := make([]TemplateAccess, 0)
+				for _, a := range e.Record.Access {
+					accesses = append(accesses, TemplateAccess{
+						Alias:               a.Alias,
+						SecretKey:           base64.RawURLEncoding.EncodeToString(a.SecretKey),
+						EncryptionAlgorithm: a.EncryptionAlgorithm.String(),
+					})
+				}
+				references := make([]TemplateReference, 0)
+				for _, r := range e.Record.Reference {
+					references = append(references, TemplateReference{
+						Timestamp:  bcgo.TimestampToString(r.Timestamp),
+						Channel:    r.ChannelName,
+						BlockHash:  base64.RawURLEncoding.EncodeToString(r.BlockHash),
+						RecordHash: base64.RawURLEncoding.EncodeToString(r.RecordHash),
+					})
+				}
+				entries = append(entries, TemplateEntry{
+					Hash:                 base64.RawURLEncoding.EncodeToString(e.RecordHash),
+					Timestamp:            bcgo.TimestampToString(e.Record.Timestamp),
+					Creator:              e.Record.Creator,
+					Access:               accesses,
+					Payload:              base64.RawURLEncoding.EncodeToString(e.Record.Payload),
+					CompressionAlgorithm: e.Record.CompressionAlgorithm.String(),
+					EncryptionAlgorithm:  e.Record.EncryptionAlgorithm.String(),
+					Signature:            base64.RawURLEncoding.EncodeToString(e.Record.Signature),
+					SignatureAlgorithm:   e.Record.SignatureAlgorithm.String(),
+					Reference:            references,
+				})
+			}
+			data := struct {
+				Hash      string
+				Timestamp string
+				Channel   string
+				Length    string
+				Previous  string
+				Miner     string
+				Nonce     string
+				Entry     []TemplateEntry
+			}{
+				Hash:      hash,
+				Timestamp: bcgo.TimestampToString(block.Timestamp),
+				Channel:   channel,
+				Length:    fmt.Sprintf("%d", block.Length),
+				Previous:  base64.RawURLEncoding.EncodeToString(block.Previous),
+				Miner:     block.Miner,
+				Nonce:     fmt.Sprintf("%d", block.Nonce),
+				Entry:     entries,
+			}
+			log.Println("Data", data)
+			err = t.Execute(w, data)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+		}
+	default:
+		log.Println("Unsupported method", r.Method)
+	}
+}
+
+func HandleChannel(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
+	switch r.Method {
+	case "GET":
+		query := r.URL.Query()
+		var channel string
+		if results, ok := query["channel"]; ok && len(results) == 1 {
+			channel = results[0]
+		}
+		log.Println("Channel", channel)
+		if len(channel) > 0 {
+			c, err := bcgo.OpenChannel(channel)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			// Read from cache
+			reference, err := bcgo.ReadHeadFile(c.Cache, c.Name)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			t, err := template.ParseFiles("html/template/channel.html")
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			data := struct {
+				Channel   string
+				Timestamp string
+				Hash      string
+			}{
+				Channel:   channel,
+				Timestamp: bcgo.TimestampToString(reference.Timestamp),
+				Hash:      base64.RawURLEncoding.EncodeToString(reference.BlockHash),
+			}
+			log.Println("Data", data)
+			err = t.Execute(w, data)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+		} else {
+			// TODO show list of current channels
 		}
 	default:
 		log.Println("Unsupported method", r.Method)
@@ -331,7 +548,7 @@ func HandleStatic(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleBlock(conn net.Conn) {
+func HandleBlockPort(conn net.Conn) {
 	defer conn.Close()
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
@@ -398,7 +615,7 @@ func HandleBlock(conn net.Conn) {
 	}
 }
 
-func HandleHead(conn net.Conn) {
+func HandleHeadPort(conn net.Conn) {
 	defer conn.Close()
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
@@ -427,7 +644,7 @@ func HandleHead(conn net.Conn) {
 	}
 }
 
-func HandleCast(conn net.Conn) {
+func HandleCastPort(conn net.Conn) {
 	defer conn.Close()
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
