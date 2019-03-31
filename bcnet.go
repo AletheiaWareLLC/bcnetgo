@@ -201,76 +201,78 @@ func HandleAliasRegister(w http.ResponseWriter, r *http.Request) {
 		signatureAlgorithm := r.Form["signatureAlgorithm"]
 		log.Println("SignatureAlgorithm", signatureAlgorithm)
 
-		if alias[0] == "" {
-			log.Println("Empty Alias")
-			return
-		}
+		if len(alias) > 0 && len(publicKey) > 0 && len(publicKeyFormat) > 0 && len(signature) > 0 && len(signatureAlgorithm) > 0 {
+			if alias[0] == "" {
+				log.Println("Empty Alias")
+				return
+			}
 
-		if err := aliasgo.UniqueAlias(aliases, alias[0]); err != nil {
-			log.Println(err)
-			return
-		}
+			if err := aliasgo.UniqueAlias(aliases, alias[0]); err != nil {
+				log.Println(err)
+				return
+			}
 
-		pubKey, err := base64.RawURLEncoding.DecodeString(publicKey[0])
-		if err != nil {
-			log.Println(err)
-			return
-		}
+			pubKey, err := base64.RawURLEncoding.DecodeString(publicKey[0])
+			if err != nil {
+				log.Println(err)
+				return
+			}
 
-		pubFormatValue, ok := bcgo.PublicKeyFormat_value[publicKeyFormat[0]]
-		if !ok {
-			log.Println("Unrecognized Public Key Format")
-			return
-		}
-		pubFormat := bcgo.PublicKeyFormat(pubFormatValue)
+			pubFormatValue, ok := bcgo.PublicKeyFormat_value[publicKeyFormat[0]]
+			if !ok {
+				log.Println("Unrecognized Public Key Format")
+				return
+			}
+			pubFormat := bcgo.PublicKeyFormat(pubFormatValue)
 
-		sig, err := base64.RawURLEncoding.DecodeString(signature[0])
-		if err != nil {
-			log.Println(err)
-			return
-		}
+			sig, err := base64.RawURLEncoding.DecodeString(signature[0])
+			if err != nil {
+				log.Println(err)
+				return
+			}
 
-		sigAlgValue, ok := bcgo.SignatureAlgorithm_value[signatureAlgorithm[0]]
-		if !ok {
-			log.Println("Unrecognized Signature")
-			return
-		}
-		sigAlg := bcgo.SignatureAlgorithm(sigAlgValue)
+			sigAlgValue, ok := bcgo.SignatureAlgorithm_value[signatureAlgorithm[0]]
+			if !ok {
+				log.Println("Unrecognized Signature")
+				return
+			}
+			sigAlg := bcgo.SignatureAlgorithm(sigAlgValue)
 
-		record, err := aliasgo.CreateAliasRecord(alias[0], pubKey, pubFormat, sig, sigAlg)
-		if err != nil {
-			log.Println(err)
-			return
-		}
+			record, err := aliasgo.CreateAliasRecord(alias[0], pubKey, pubFormat, sig, sigAlg)
+			if err != nil {
+				log.Println(err)
+				return
+			}
 
-		data, err := proto.Marshal(record)
-		if err != nil {
-			log.Println(err)
-			return
-		}
+			data, err := proto.Marshal(record)
+			if err != nil {
+				log.Println(err)
+				return
+			}
 
-		entries := [1]*bcgo.BlockEntry{
-			&bcgo.BlockEntry{
-				RecordHash: bcgo.Hash(data),
-				Record:     record,
-			},
-		}
+			entries := [1]*bcgo.BlockEntry{
+				&bcgo.BlockEntry{
+					RecordHash: bcgo.Hash(data),
+					Record:     record,
+				},
+			}
 
-		node, err := bcgo.GetNode()
-		if err != nil {
-			log.Println(err)
-			return
-		}
+			node, err := bcgo.GetNode()
+			if err != nil {
+				log.Println(err)
+				return
+			}
 
-		// Mine record into blockchain
-		hash, block, err := node.MineRecords(aliases, entries[:])
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		if err := aliases.Cast(hash, block); err != nil {
-			log.Println(err)
-			return
+			// Mine record into blockchain
+			hash, block, err := node.MineRecords(aliases, entries[:])
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			if err := aliases.Cast(hash, block); err != nil {
+				log.Println(err)
+				return
+			}
 		}
 	default:
 		log.Println("Unsupported method", r.Method)
