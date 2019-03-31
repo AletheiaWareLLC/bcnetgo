@@ -443,7 +443,41 @@ func HandleChannel(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		} else {
-			// TODO show list of current channels
+			t, err := template.ParseFiles("html/template/channel-list.html")
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			type TemplateChannel struct {
+				Name      string
+				Timestamp string
+				Hash      string
+			}
+			channels := make([]TemplateChannel, 0)
+			for name, channel := range bcgo.Channels {
+				// Read from cache
+				reference, err := bcgo.ReadHeadFile(channel.Cache, name)
+				if err != nil {
+					log.Println(err)
+				} else {
+					channels = append(channels, TemplateChannel{
+						Name:      name,
+						Timestamp: bcgo.TimestampToString(reference.Timestamp),
+						Hash:      base64.RawURLEncoding.EncodeToString(reference.BlockHash),
+					})
+				}
+			}
+			data := struct {
+				Channel []TemplateChannel
+			}{
+				Channel: channels,
+			}
+			log.Println("Data", data)
+			err = t.Execute(w, data)
+			if err != nil {
+				log.Println(err)
+				return
+			}
 		}
 	default:
 		log.Println("Unsupported method", r.Method)
