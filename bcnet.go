@@ -55,6 +55,7 @@ func Bind(port int, handler func(net.Conn)) {
 }
 
 func HTTPSRedirect(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
 	target := "https://" + r.Host + r.URL.Path
 	if len(r.URL.RawQuery) > 0 {
 		target += "?" + r.URL.RawQuery
@@ -363,7 +364,7 @@ func HandleBlock(w http.ResponseWriter, r *http.Request) {
 					Timestamp:            bcgo.TimestampToString(e.Record.Timestamp),
 					Creator:              e.Record.Creator,
 					Access:               accesses,
-					Payload:              base64.RawURLEncoding.EncodeToString(e.Record.Payload),
+					Payload:              base64.RawURLEncoding.EncodeToString(e.Record.Payload), // TODO allow override for custom rendering
 					CompressionAlgorithm: e.Record.CompressionAlgorithm.String(),
 					EncryptionAlgorithm:  e.Record.EncryptionAlgorithm.String(),
 					Signature:            base64.RawURLEncoding.EncodeToString(e.Record.Signature),
