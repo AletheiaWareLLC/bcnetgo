@@ -47,7 +47,7 @@ func StripeWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func RegistrationHandler(node *bcgo.Node, listener bcgo.MiningListener, template *template.Template, publishableKey string) func(w http.ResponseWriter, r *http.Request) {
+func RegistrationHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listener bcgo.MiningListener, template *template.Template, publishableKey string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
 		switch r.Method {
@@ -89,13 +89,8 @@ func RegistrationHandler(node *bcgo.Node, listener bcgo.MiningListener, template
 			// stripeTokenType := r.Form["stripeTokenType"]
 
 			if len(alias) > 0 && len(stripeEmail) > 0 && len(stripeToken) > 0 {
-				aliases, err := node.GetChannel(aliasgo.ALIAS)
-				if err != nil {
-					log.Println(err)
-					return
-				}
 				// Get rsa.PublicKey for Alias
-				publicKey, err := aliasgo.GetPublicKey(aliases, node.Cache, node.Network, alias[0])
+				publicKey, err := aliases.GetPublicKey(node.Cache, alias[0])
 				if err != nil {
 					log.Println(err)
 					return
@@ -159,7 +154,7 @@ func RegistrationHandler(node *bcgo.Node, listener bcgo.MiningListener, template
 	}
 }
 
-func SubscriptionHandler(node *bcgo.Node, listener bcgo.MiningListener, template *template.Template, productId, planId string) func(w http.ResponseWriter, r *http.Request) {
+func SubscriptionHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listener bcgo.MiningListener, template *template.Template, productId, planId string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
 		switch r.Method {
@@ -187,13 +182,8 @@ func SubscriptionHandler(node *bcgo.Node, listener bcgo.MiningListener, template
 			customerId := r.Form["customerId"]
 
 			if len(alias) > 0 && len(customerId) > 0 {
-				aliases, err := node.GetChannel(aliasgo.ALIAS)
-				if err != nil {
-					log.Println(err)
-					return
-				}
 				// Get rsa.PublicKey for Alias
-				publicKey, err := aliasgo.GetPublicKey(aliases, node.Cache, node.Network, alias[0])
+				publicKey, err := aliases.GetPublicKey(node.Cache, alias[0])
 				if err != nil {
 					log.Println(err)
 					return
