@@ -103,44 +103,44 @@ func RegistrationHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 				}
 				log.Println("Access", acl)
 
-				stripeCustomer, bcCustomer, err := financego.NewCustomer(alias[0], stripeEmail[0], stripeToken[0], "Space Customer: "+alias[0])
+				stripeCustomer, bcRegistration, err := financego.NewRegistration(node.Alias, alias[0], stripeEmail[0], stripeToken[0], "Space Customer: "+alias[0])
 				if err != nil {
 					log.Println(err)
 					return
 				}
 				log.Println("StripeCustomer", stripeCustomer)
-				log.Println("BcCustomer", bcCustomer)
-				customerData, err := proto.Marshal(bcCustomer)
+				log.Println("BcRegistration", bcRegistration)
+				registrationData, err := proto.Marshal(bcRegistration)
 				if err != nil {
 					log.Println(err)
 					return
 				}
 
-				customers := financego.OpenAndLoadCustomerChannel(node.Cache, node.Network)
-				_, err = node.Write(customers, acl, nil, customerData)
+				registrations := financego.OpenAndLoadRegistrationChannel(node.Cache, node.Network)
+				_, err = node.Write(registrations, acl, nil, registrationData)
 				if err != nil {
 					log.Println(err)
 					return
 				}
 
-				customerHash, customerBlock, err := node.Mine(customers, listener)
+				registrationHash, registrationBlock, err := node.Mine(registrations, listener)
 				if err != nil {
 					log.Println(err)
 					return
 				}
-				customerReference := &bcgo.Reference{
-					Timestamp:   customerBlock.Timestamp,
-					ChannelName: customerBlock.ChannelName,
-					BlockHash:   customerHash,
+				registrationReference := &bcgo.Reference{
+					Timestamp:   registrationBlock.Timestamp,
+					ChannelName: registrationBlock.ChannelName,
+					BlockHash:   registrationHash,
 				}
-				log.Println("CustomerReference", customerReference)
+				log.Println("RegistrationReference", registrationReference)
 
 				switch api[0] {
 				case "1":
 					w.Write([]byte(stripeCustomer.ID))
 					w.Write([]byte("\n"))
 				case "2":
-					if err := bcgo.WriteDelimitedProtobuf(bufio.NewWriter(w), customerReference); err != nil {
+					if err := bcgo.WriteDelimitedProtobuf(bufio.NewWriter(w), registrationReference); err != nil {
 						log.Println(err)
 						return
 					}
@@ -196,7 +196,7 @@ func SubscriptionHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 				}
 				log.Println("Access", acl)
 
-				stripeSubscription, bcSubscription, err := financego.NewSubscription(alias[0], customerId[0], "", productId, planId)
+				stripeSubscription, bcSubscription, err := financego.NewSubscription(node.Alias, alias[0], customerId[0], "", productId, planId)
 				if err != nil {
 					log.Println(err)
 					return
