@@ -89,6 +89,11 @@ func RegistrationHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 			// stripeTokenType := r.Form["stripeTokenType"]
 
 			if len(alias) > 0 && len(stripeEmail) > 0 && len(stripeToken) > 0 {
+				if err := bcgo.Pull(aliases, node.Cache, node.Network); err != nil {
+					log.Println(err)
+					return
+				}
+
 				// Get rsa.PublicKey for Alias
 				publicKey, err := aliases.GetPublicKey(node.Cache, alias[0])
 				if err != nil {
@@ -116,7 +121,7 @@ func RegistrationHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 					return
 				}
 
-				registrations := financego.OpenAndLoadRegistrationChannel(node.Cache, node.Network)
+				registrations := financego.OpenAndPullRegistrationChannel(node.Cache, node.Network)
 				_, err = node.Write(registrations, acl, nil, registrationData)
 				if err != nil {
 					log.Println(err)
@@ -182,6 +187,11 @@ func SubscriptionHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 			customerId := r.Form["customerId"]
 
 			if len(alias) > 0 && len(customerId) > 0 {
+				if err := bcgo.Pull(aliases, node.Cache, node.Network); err != nil {
+					log.Println(err)
+					return
+				}
+
 				// Get rsa.PublicKey for Alias
 				publicKey, err := aliases.GetPublicKey(node.Cache, alias[0])
 				if err != nil {
@@ -210,7 +220,7 @@ func SubscriptionHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 					return
 				}
 
-				subscriptions := financego.OpenAndLoadSubscriptionChannel(node.Cache, node.Network)
+				subscriptions := financego.OpenAndPullSubscriptionChannel(node.Cache, node.Network)
 				_, err = node.Write(subscriptions, acl, nil, subscriptionData)
 				if err != nil {
 					log.Println(err)
