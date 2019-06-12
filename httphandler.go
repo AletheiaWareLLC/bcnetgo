@@ -122,7 +122,6 @@ func BlockHandler(cache bcgo.Cache, network bcgo.Network, template *template.Tem
 					Nonce:     fmt.Sprintf("%d", block.Nonce),
 					Entry:     entries,
 				}
-				log.Println("Data", data)
 				err = template.Execute(w, data)
 				if err != nil {
 					log.Println(err)
@@ -159,7 +158,6 @@ func ChannelHandler(cache bcgo.Cache, network bcgo.Network, template *template.T
 					Timestamp: bcgo.TimestampToString(reference.Timestamp),
 					Hash:      base64.RawURLEncoding.EncodeToString(reference.BlockHash),
 				}
-				log.Println("Data", data)
 				err = template.Execute(w, data)
 				if err != nil {
 					log.Println(err)
@@ -202,7 +200,6 @@ func ChannelListHandler(cache bcgo.Cache, network bcgo.Network, template *templa
 			}{
 				Channel: channels,
 			}
-			log.Println("Data", data)
 			if err := template.Execute(w, data); err != nil {
 				log.Println(err)
 				return

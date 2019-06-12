@@ -68,7 +68,6 @@ func RegistrationHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 				Name:        "Aletheia Ware LLC",
 				Alias:       alias,
 			}
-			log.Println("Data", data)
 			if err := template.Execute(w, data); err != nil {
 				log.Println(err)
 				return
@@ -175,7 +174,6 @@ func SubscriptionHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 				Alias:      alias,
 				CustomerId: customerId,
 			}
-			log.Println("Data", data)
 			if err := template.Execute(w, data); err != nil {
 				log.Println(err)
 				return
