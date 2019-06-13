@@ -120,7 +120,15 @@ func RegistrationHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 					return
 				}
 
-				registrations := financego.OpenAndPullRegistrationChannel(node.Cache, node.Network)
+				registrations := financego.OpenRegistrationChannel()
+				if err := bcgo.LoadHead(registrations, node.Cache, node.Network); err != nil {
+					log.Println(err)
+					return
+				}
+				if err := bcgo.Pull(registrations, node.Cache, node.Network); err != nil {
+					log.Println(err)
+					return
+				}
 				_, err = node.Write(registrations, acl, nil, registrationData)
 				if err != nil {
 					log.Println(err)
@@ -218,7 +226,15 @@ func SubscriptionHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 					return
 				}
 
-				subscriptions := financego.OpenAndPullSubscriptionChannel(node.Cache, node.Network)
+				subscriptions := financego.OpenSubscriptionChannel()
+				if err := bcgo.LoadHead(subscriptions, node.Cache, node.Network); err != nil {
+					log.Println(err)
+					return
+				}
+				if err := bcgo.Pull(subscriptions, node.Cache, node.Network); err != nil {
+					log.Println(err)
+					return
+				}
 				_, err = node.Write(subscriptions, acl, nil, subscriptionData)
 				if err != nil {
 					log.Println(err)
