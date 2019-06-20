@@ -61,7 +61,7 @@ func BlockPortHandler(cache bcgo.Cache, network bcgo.Network) func(conn net.Conn
 			hash := request.RecordHash
 			if hash != nil && len(hash) > 0 {
 				// Search through chain until record hash is found, and return the containing block
-				if err := bcgo.Iterate(reference.BlockHash, nil, cache, func(h []byte, b *bcgo.Block) error {
+				if err := bcgo.Iterate(request.ChannelName, reference.BlockHash, nil, cache, network, func(h []byte, b *bcgo.Block) error {
 					for _, e := range b.Entry {
 						if bytes.Equal(e.RecordHash, hash) {
 							log.Println("Found record, writing block")
@@ -175,7 +175,7 @@ func BroadcastPortHandler(cache bcgo.Cache, network bcgo.Network, open func(stri
 			}
 		}
 
-		if err := bcgo.Update(channel, cache, hash, block); err != nil {
+		if err := bcgo.Update(channel, cache, network, hash, block); err != nil {
 			log.Println(err)
 			// return - Must send head reference back
 		}

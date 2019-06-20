@@ -90,11 +90,10 @@ func RegistrationHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 			if len(alias) > 0 && len(stripeEmail) > 0 && len(stripeToken) > 0 {
 				if err := bcgo.Pull(aliases, node.Cache, node.Network); err != nil {
 					log.Println(err)
-					return
 				}
 
 				// Get rsa.PublicKey for Alias
-				publicKey, err := aliases.GetPublicKey(node.Cache, alias[0])
+				publicKey, err := aliases.GetPublicKey(node.Cache, node.Network, alias[0])
 				if err != nil {
 					log.Println(err)
 					return
@@ -127,7 +126,6 @@ func RegistrationHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 				}
 				if err := bcgo.Pull(registrations, node.Cache, node.Network); err != nil {
 					log.Println(err)
-					return
 				}
 				_, err = node.Write(registrations, acl, nil, registrationData)
 				if err != nil {
@@ -195,11 +193,10 @@ func SubscriptionHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 			if len(alias) > 0 && len(customerId) > 0 {
 				if err := bcgo.Pull(aliases, node.Cache, node.Network); err != nil {
 					log.Println(err)
-					return
 				}
 
 				// Get rsa.PublicKey for Alias
-				publicKey, err := aliases.GetPublicKey(node.Cache, alias[0])
+				publicKey, err := aliases.GetPublicKey(node.Cache, node.Network, alias[0])
 				if err != nil {
 					log.Println(err)
 					return
@@ -233,7 +230,6 @@ func SubscriptionHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 				}
 				if err := bcgo.Pull(subscriptions, node.Cache, node.Network); err != nil {
 					log.Println(err)
-					return
 				}
 				_, err = node.Write(subscriptions, acl, nil, subscriptionData)
 				if err != nil {
