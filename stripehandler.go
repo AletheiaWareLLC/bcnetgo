@@ -164,7 +164,7 @@ func RegistrationHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 	}
 }
 
-func SubscriptionHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listener bcgo.MiningListener, template *template.Template, productId, planId string) func(w http.ResponseWriter, r *http.Request) {
+func SubscriptionHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listener bcgo.MiningListener, template *template.Template, redirect, productId, planId string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
 		switch r.Method {
@@ -259,7 +259,7 @@ func SubscriptionHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 						return
 					}
 				default:
-					http.Redirect(w, r, "/subscribed.html", http.StatusFound)
+					http.Redirect(w, r, redirect, http.StatusFound)
 				}
 			}
 		default:
