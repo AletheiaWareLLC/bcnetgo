@@ -137,6 +137,9 @@ func RegistrationHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 					log.Println(err)
 					return
 				}
+				if err := bcgo.Push(registrations, node.Cache, node.Network); err != nil {
+					log.Println(err)
+				}
 				registrationReference := &bcgo.Reference{
 					Timestamp:   registrationBlock.Timestamp,
 					ChannelName: registrationBlock.ChannelName,
@@ -239,6 +242,9 @@ func SubscriptionHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 				if err != nil {
 					log.Println(err)
 					return
+				}
+				if err := bcgo.Push(subscriptions, node.Cache, node.Network); err != nil {
+					log.Println(err)
 				}
 				subscriptionReference := &bcgo.Reference{
 					Timestamp:   subscriptionBlock.Timestamp,
