@@ -147,18 +147,20 @@ func RegistrationHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 				}
 				log.Println("RegistrationReference", registrationReference)
 
-				switch api[0] {
-				case "1":
-					w.Write([]byte(stripeCustomer.ID))
-					w.Write([]byte("\n"))
-				case "2":
-					if err := bcgo.WriteDelimitedProtobuf(bufio.NewWriter(w), registrationReference); err != nil {
-						log.Println(err)
+				if len(api) > 0 {
+					switch api[0] {
+					case "1":
+						w.Write([]byte(stripeCustomer.ID))
+						w.Write([]byte("\n"))
+						return
+					case "2":
+						if err := bcgo.WriteDelimitedProtobuf(bufio.NewWriter(w), registrationReference); err != nil {
+							log.Println(err)
+						}
 						return
 					}
-				default:
-					http.Redirect(w, r, "/registered.html", http.StatusFound)
 				}
+				http.Redirect(w, r, "/registered.html", http.StatusFound)
 			}
 		default:
 			log.Println("Unsupported method", r.Method)
@@ -253,18 +255,20 @@ func SubscriptionHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 				}
 				log.Println("SubscriptionReference", subscriptionReference)
 
-				switch api[0] {
-				case "1":
-					w.Write([]byte(stripeSubscription.ID))
-					w.Write([]byte("\n"))
-				case "2":
-					if err := bcgo.WriteDelimitedProtobuf(bufio.NewWriter(w), subscriptionReference); err != nil {
-						log.Println(err)
+				if len(api) > 0 {
+					switch api[0] {
+					case "1":
+						w.Write([]byte(stripeSubscription.ID))
+						w.Write([]byte("\n"))
+						return
+					case "2":
+						if err := bcgo.WriteDelimitedProtobuf(bufio.NewWriter(w), subscriptionReference); err != nil {
+							log.Println(err)
+						}
 						return
 					}
-				default:
-					http.Redirect(w, r, redirect, http.StatusFound)
 				}
+				http.Redirect(w, r, redirect, http.StatusFound)
 			}
 		default:
 			log.Println("Unsupported method", r.Method)
