@@ -29,21 +29,42 @@ func TestBind(t *testing.T) {
 }
 
 func TestHTTPSRedirect(t *testing.T) {
-	request, _ := http.NewRequest(http.MethodGet, "foo/bar", nil)
-	response := httptest.NewRecorder()
+	t.Run("allowed", func(t *testing.T) {
+		request, _ := http.NewRequest(http.MethodGet, "/foo/bar", nil)
+		response := httptest.NewRecorder()
 
-	bcnetgo.HTTPSRedirect(response, request)
+		bcnetgo.HTTPSRedirect(map[string]bool{
+			"/foo/bar": true,
+		})(response, request)
 
-	if response.Code != http.StatusTemporaryRedirect {
-		t.Errorf("Wrong response code; expected 300, got '%s'", http.StatusText(response.Code))
-	}
+		if response.Code != http.StatusTemporaryRedirect {
+			t.Errorf("Wrong response code; expected 300, got '%s'", http.StatusText(response.Code))
+		}
 
-	actual := response.Body.String()
-	expected := "<a href=\"https://foo/bar\">Temporary Redirect</a>.\n\n"
+		actual := response.Body.String()
+		expected := "<a href=\"https:///foo/bar\">Temporary Redirect</a>.\n\n"
 
-	if actual != expected {
-		t.Errorf("Wrong redirect; expected '%s', got '%s'", expected, actual)
-	}
+		if actual != expected {
+			t.Errorf("Wrong response; expected '%s', got '%s'", expected, actual)
+		}
+	})
+	t.Run("not allowed", func(t *testing.T) {
+		request, _ := http.NewRequest(http.MethodGet, "/foo/bar", nil)
+		response := httptest.NewRecorder()
+
+		bcnetgo.HTTPSRedirect(map[string]bool{})(response, request)
+
+		if response.Code != http.StatusNotFound {
+			t.Errorf("Wrong response code; expected 404, got '%s'", http.StatusText(response.Code))
+		}
+
+		actual := response.Body.String()
+		expected := "404 page not found\n"
+
+		if actual != expected {
+			t.Errorf("Wrong response; expected '%s', got '%s'", expected, actual)
+		}
+	})
 }
 
 func TestStaticHandler(t *testing.T) {
