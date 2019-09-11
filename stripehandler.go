@@ -47,7 +47,7 @@ func StripeWebhookHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func RegistrationHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listener bcgo.MiningListener, template *template.Template, publishableKey string) func(w http.ResponseWriter, r *http.Request) {
+func RegistrationHandler(aliases *aliasgo.AliasChannel, registrations *bcgo.PoWChannel, node *bcgo.Node, listener bcgo.MiningListener, template *template.Template, publishableKey string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
 		switch r.Method {
@@ -119,7 +119,6 @@ func RegistrationHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 					return
 				}
 
-				registrations := financego.OpenRegistrationChannel()
 				if err := bcgo.LoadHead(registrations, node.Cache, node.Network); err != nil {
 					log.Println(err)
 				}
@@ -168,7 +167,7 @@ func RegistrationHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 	}
 }
 
-func SubscriptionHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listener bcgo.MiningListener, template *template.Template, redirect, productId, planId string) func(w http.ResponseWriter, r *http.Request) {
+func SubscriptionHandler(aliases *aliasgo.AliasChannel, subscriptions *bcgo.PoWChannel, node *bcgo.Node, listener bcgo.MiningListener, template *template.Template, redirect, productId, planId string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
 		switch r.Method {
@@ -227,7 +226,6 @@ func SubscriptionHandler(aliases *aliasgo.AliasChannel, node *bcgo.Node, listene
 					return
 				}
 
-				subscriptions := financego.OpenSubscriptionChannel()
 				if err := bcgo.LoadHead(subscriptions, node.Cache, node.Network); err != nil {
 					log.Println(err)
 				}
