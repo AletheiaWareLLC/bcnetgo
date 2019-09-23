@@ -23,28 +23,33 @@ import (
 	"github.com/AletheiaWareLLC/bcgo"
 	"github.com/AletheiaWareLLC/financego"
 	"github.com/golang/protobuf/proto"
+	"github.com/stripe/stripe-go"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
 )
 
-func StripeWebhookHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
-	log.Println("Stripe Webhook", r)
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	event, err := financego.ConstructEvent(data, r.Header.Get("Stripe-Signature"))
-	if err != nil {
-		log.Println(err)
-		return
-	}
+func StripeWebhookHandler(callback func(stripe.Event)) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
+		log.Println("Stripe Webhook", r)
+		data, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		event, err := financego.ConstructEvent(data, r.Header.Get("Stripe-Signature"))
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		log.Println("Event", event)
 
-	log.Println("Event", event)
-	w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusOK)
+
+		callback(event)
+	}
 }
 
 func RegistrationHandler(aliases *aliasgo.AliasChannel, registrations *bcgo.PoWChannel, node *bcgo.Node, listener bcgo.MiningListener, template *template.Template, publishableKey string) func(w http.ResponseWriter, r *http.Request) {
