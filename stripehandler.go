@@ -124,7 +124,7 @@ func RegistrationHandler(aliases *aliasgo.AliasChannel, registrations *bcgo.PoWC
 					return
 				}
 
-				if err := bcgo.LoadHead(registrations, node.Cache, node.Network); err != nil {
+				if err := bcgo.LoadCachedHead(registrations, node.Cache); err != nil {
 					log.Println(err)
 				}
 				if err := bcgo.Pull(registrations, node.Cache, node.Network); err != nil {
@@ -231,7 +231,7 @@ func SubscriptionHandler(aliases *aliasgo.AliasChannel, subscriptions *bcgo.PoWC
 					return
 				}
 
-				if err := bcgo.LoadHead(subscriptions, node.Cache, node.Network); err != nil {
+				if err := bcgo.LoadCachedHead(subscriptions, node.Cache); err != nil {
 					log.Println(err)
 				}
 				if err := bcgo.Pull(subscriptions, node.Cache, node.Network); err != nil {
