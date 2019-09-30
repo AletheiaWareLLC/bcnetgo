@@ -111,7 +111,7 @@ func RegistrationHandler(aliases *aliasgo.AliasChannel, registrations *bcgo.PoWC
 				}
 				log.Println("Access", acl)
 
-				stripeCustomer, bcRegistration, err := financego.NewRegistration(node.Alias, alias[0], stripeEmail[0], stripeToken[0], "Space Customer: "+alias[0])
+				stripeCustomer, bcRegistration, err := financego.NewRegistration(node.Alias, alias[0], stripeEmail[0], stripeToken[0], alias[0]+" "+node.Alias)
 				if err != nil {
 					log.Println(err)
 					return
