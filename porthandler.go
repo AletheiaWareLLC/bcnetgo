@@ -26,6 +26,7 @@ import (
 )
 
 func BlockPortHandler(cache bcgo.Cache, network bcgo.Network) func(conn net.Conn) {
+	inflight := make(map[string]bool)
 	return func(conn net.Conn) {
 		defer conn.Close()
 		reader := bufio.NewReader(conn)
@@ -38,6 +39,15 @@ func BlockPortHandler(cache bcgo.Cache, network bcgo.Network) func(conn net.Conn
 		blockHash := base64.RawURLEncoding.EncodeToString(request.BlockHash)
 		recordHash := base64.RawURLEncoding.EncodeToString(request.RecordHash)
 		log.Println("Block Request", conn.RemoteAddr(), request.ChannelName, blockHash, recordHash)
+		key := request.ChannelName + blockHash + recordHash
+		if inflight[key] {
+			log.Println("Block Request Already Inflight")
+			return
+		}
+		inflight[key] = true
+		defer func() {
+			inflight[key] = false
+		}()
 		hash := request.BlockHash
 		if hash != nil && len(hash) > 0 {
 			// Read block
@@ -92,6 +102,7 @@ func BlockPortHandler(cache bcgo.Cache, network bcgo.Network) func(conn net.Conn
 }
 
 func HeadPortHandler(cache bcgo.Cache, network bcgo.Network) func(conn net.Conn) {
+	inflight := make(map[string]bool)
 	return func(conn net.Conn) {
 		defer conn.Close()
 		reader := bufio.NewReader(conn)
@@ -102,6 +113,15 @@ func HeadPortHandler(cache bcgo.Cache, network bcgo.Network) func(conn net.Conn)
 			return
 		}
 		log.Println("Head Request", conn.RemoteAddr(), request.ChannelName)
+		key := request.ChannelName
+		if inflight[key] {
+			log.Println("Head Request Already Inflight")
+			return
+		}
+		inflight[key] = true
+		defer func() {
+			inflight[key] = false
+		}()
 		reference, err := bcgo.GetHeadReference(request.ChannelName, cache, network)
 		if err != nil {
 			log.Println(err)
@@ -117,6 +137,7 @@ func HeadPortHandler(cache bcgo.Cache, network bcgo.Network) func(conn net.Conn)
 }
 
 func BroadcastPortHandler(cache bcgo.Cache, network bcgo.Network, open func(string) (bcgo.Channel, error)) func(conn net.Conn) {
+	inflight := make(map[string]bool)
 	return func(conn net.Conn) {
 		defer conn.Close()
 		reader := bufio.NewReader(conn)
@@ -131,7 +152,17 @@ func BroadcastPortHandler(cache bcgo.Cache, network bcgo.Network, open func(stri
 			log.Println(err)
 			return
 		}
-		log.Println("Broadcast", conn.RemoteAddr(), block.ChannelName, base64.RawURLEncoding.EncodeToString(hash))
+		blockHash := base64.RawURLEncoding.EncodeToString(hash)
+		log.Println("Broadcast", conn.RemoteAddr(), block.ChannelName, blockHash)
+		key := block.ChannelName + blockHash
+		if inflight[key] {
+			log.Println("Broadcast Already Inflight")
+			return
+		}
+		inflight[key] = true
+		defer func() {
+			inflight[key] = false
+		}()
 		channel, err := open(block.ChannelName)
 		if err != nil {
 			log.Println(err)
