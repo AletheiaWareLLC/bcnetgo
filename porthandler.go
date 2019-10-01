@@ -23,10 +23,12 @@ import (
 	"github.com/AletheiaWareLLC/bcgo"
 	"log"
 	"net"
+	"sync"
 )
 
 func BlockPortHandler(cache bcgo.Cache, network bcgo.Network) func(conn net.Conn) {
 	inflight := make(map[string]bool)
+	mutex := sync.RWMutex{}
 	return func(conn net.Conn) {
 		defer conn.Close()
 		reader := bufio.NewReader(conn)
@@ -40,13 +42,18 @@ func BlockPortHandler(cache bcgo.Cache, network bcgo.Network) func(conn net.Conn
 		recordHash := base64.RawURLEncoding.EncodeToString(request.RecordHash)
 		log.Println("Block Request", conn.RemoteAddr(), request.ChannelName, blockHash, recordHash)
 		key := request.ChannelName + blockHash + recordHash
+		mutex.Lock()
 		if inflight[key] {
+			mutex.Unlock()
 			log.Println("Block Request Already Inflight")
 			return
 		}
 		inflight[key] = true
+		mutex.Unlock()
 		defer func() {
+			mutex.Lock()
 			inflight[key] = false
+			mutex.Unlock()
 		}()
 		hash := request.BlockHash
 		if hash != nil && len(hash) > 0 {
@@ -103,6 +110,7 @@ func BlockPortHandler(cache bcgo.Cache, network bcgo.Network) func(conn net.Conn
 
 func HeadPortHandler(cache bcgo.Cache, network bcgo.Network) func(conn net.Conn) {
 	inflight := make(map[string]bool)
+	mutex := sync.RWMutex{}
 	return func(conn net.Conn) {
 		defer conn.Close()
 		reader := bufio.NewReader(conn)
@@ -114,13 +122,18 @@ func HeadPortHandler(cache bcgo.Cache, network bcgo.Network) func(conn net.Conn)
 		}
 		log.Println("Head Request", conn.RemoteAddr(), request.ChannelName)
 		key := request.ChannelName
+		mutex.Lock()
 		if inflight[key] {
+			mutex.Unlock()
 			log.Println("Head Request Already Inflight")
 			return
 		}
 		inflight[key] = true
+		mutex.Unlock()
 		defer func() {
+			mutex.Lock()
 			inflight[key] = false
+			mutex.Unlock()
 		}()
 		reference, err := bcgo.GetHeadReference(request.ChannelName, cache, network)
 		if err != nil {
@@ -138,6 +151,7 @@ func HeadPortHandler(cache bcgo.Cache, network bcgo.Network) func(conn net.Conn)
 
 func BroadcastPortHandler(cache bcgo.Cache, network bcgo.Network, open func(string) (bcgo.Channel, error)) func(conn net.Conn) {
 	inflight := make(map[string]bool)
+	mutex := sync.RWMutex{}
 	return func(conn net.Conn) {
 		defer conn.Close()
 		reader := bufio.NewReader(conn)
@@ -155,13 +169,18 @@ func BroadcastPortHandler(cache bcgo.Cache, network bcgo.Network, open func(stri
 		blockHash := base64.RawURLEncoding.EncodeToString(hash)
 		log.Println("Broadcast", conn.RemoteAddr(), block.ChannelName, blockHash)
 		key := block.ChannelName + blockHash
+		mutex.Lock()
 		if inflight[key] {
+			mutex.Unlock()
 			log.Println("Broadcast Already Inflight")
 			return
 		}
 		inflight[key] = true
+		mutex.Unlock()
 		defer func() {
+			mutex.Lock()
 			inflight[key] = false
+			mutex.Unlock()
 		}()
 		channel, err := open(block.ChannelName)
 		if err != nil {
