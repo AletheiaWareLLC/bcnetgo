@@ -20,6 +20,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/AletheiaWareLLC/bcgo"
+	"github.com/AletheiaWareLLC/netgo"
 	"html/template"
 	"log"
 	"net/http"
@@ -30,10 +31,10 @@ func BlockHandler(cache bcgo.Cache, network bcgo.Network, template *template.Tem
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
 		switch r.Method {
 		case "GET":
-			channel := GetQueryParameter(r.URL.Query(), "channel")
+			channel := netgo.GetQueryParameter(r.URL.Query(), "channel")
 			log.Println("Channel", channel)
 
-			hash := GetQueryParameter(r.URL.Query(), "hash")
+			hash := netgo.GetQueryParameter(r.URL.Query(), "hash")
 			log.Println("Hash", hash)
 
 			if len(channel) > 0 && len(hash) > 0 {
@@ -141,7 +142,7 @@ func ChannelHandler(cache bcgo.Cache, network bcgo.Network, template *template.T
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
 		switch r.Method {
 		case "GET":
-			channel := GetQueryParameter(r.URL.Query(), "channel")
+			channel := netgo.GetQueryParameter(r.URL.Query(), "channel")
 			log.Println("Channel", channel)
 			if len(channel) > 0 {
 				reference, err := bcgo.GetHeadReference(channel, cache, network)

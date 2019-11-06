@@ -22,6 +22,7 @@ import (
 	"github.com/AletheiaWareLLC/aliasgo"
 	"github.com/AletheiaWareLLC/bcgo"
 	"github.com/AletheiaWareLLC/financego"
+	"github.com/AletheiaWareLLC/netgo"
 	"github.com/golang/protobuf/proto"
 	"github.com/stripe/stripe-go"
 	"html/template"
@@ -57,8 +58,8 @@ func RegistrationHandler(aliases *aliasgo.AliasChannel, registrations *bcgo.PoWC
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
 		switch r.Method {
 		case "GET":
-			alias := GetQueryParameter(r.URL.Query(), "alias")
-			publicKey := GetQueryParameter(r.URL.Query(), "publicKey")
+			alias := netgo.GetQueryParameter(r.URL.Query(), "alias")
+			publicKey := netgo.GetQueryParameter(r.URL.Query(), "publicKey")
 			log.Println("Alias", alias)
 			log.Println("PublicKey", publicKey)
 
@@ -177,8 +178,8 @@ func SubscriptionHandler(aliases *aliasgo.AliasChannel, subscriptions *bcgo.PoWC
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
 		switch r.Method {
 		case "GET":
-			alias := GetQueryParameter(r.URL.Query(), "alias")
-			customerId := GetQueryParameter(r.URL.Query(), "customerId")
+			alias := netgo.GetQueryParameter(r.URL.Query(), "alias")
+			customerId := netgo.GetQueryParameter(r.URL.Query(), "customerId")
 			log.Println("Alias", alias)
 			log.Println("Customer ID", customerId)
 			data := struct {

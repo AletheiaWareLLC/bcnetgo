@@ -20,9 +20,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"net/http"
-	"net/url"
-	"path"
 )
 
 func Bind(port int, handler func(net.Conn)) {
@@ -42,38 +39,4 @@ func Bind(port int, handler func(net.Conn)) {
 		}
 		go handler(conn)
 	}
-}
-
-func HTTPSRedirect(paths map[string]bool) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		allowed, ok := paths[r.URL.Path]
-		if allowed && ok {
-			target := "https://" + r.Host + r.URL.Path
-			if len(r.URL.RawQuery) > 0 {
-				target += "?" + r.URL.RawQuery
-			}
-			log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path, "redirected to", target)
-			http.Redirect(w, r, target, http.StatusTemporaryRedirect)
-		} else {
-			log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path, "not found")
-			http.NotFound(w, r)
-		}
-	}
-}
-
-func StaticHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
-	switch r.Method {
-	case "GET":
-		http.ServeFile(w, r, path.Join("html/static", r.URL.Path))
-	default:
-		log.Println("Unsupported method", r.Method)
-	}
-}
-
-func GetQueryParameter(query url.Values, parameter string) string {
-	if results, ok := query[parameter]; ok && len(results) > 0 {
-		return results[0]
-	}
-	return ""
 }

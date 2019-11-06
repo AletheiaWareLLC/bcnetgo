@@ -19,6 +19,7 @@ package bcnetgo
 import (
 	"encoding/base64"
 	"github.com/AletheiaWareLLC/bcgo"
+	"github.com/AletheiaWareLLC/netgo"
 	"github.com/golang/protobuf/proto"
 	"log"
 	"net/http"
@@ -32,7 +33,7 @@ func KeyShareHandler(keys KeyShareStore, timeout time.Duration) func(w http.Resp
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
 		switch r.Method {
 		case "GET":
-			alias := GetQueryParameter(r.URL.Query(), "alias")
+			alias := netgo.GetQueryParameter(r.URL.Query(), "alias")
 			log.Println("Alias", alias)
 			if k, ok := keys[alias]; ok {
 				data, err := proto.Marshal(k)
