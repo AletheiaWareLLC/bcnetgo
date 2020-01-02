@@ -53,7 +53,7 @@ func StripeWebhookHandler(callback func(stripe.Event)) func(w http.ResponseWrite
 	}
 }
 
-func RegistrationHandler(aliases *aliasgo.AliasChannel, registrations *bcgo.PoWChannel, node *bcgo.Node, listener bcgo.MiningListener, template *template.Template, publishableKey string) func(w http.ResponseWriter, r *http.Request) {
+func RegistrationHandler(aliases *bcgo.Channel, registrations *bcgo.Channel, node *bcgo.Node, threshold uint64, listener bcgo.MiningListener, template *template.Template, publishableKey string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
 		switch r.Method {
@@ -94,12 +94,12 @@ func RegistrationHandler(aliases *aliasgo.AliasChannel, registrations *bcgo.PoWC
 			// stripeTokenType := r.Form["stripeTokenType"]
 
 			if len(alias) > 0 && len(stripeEmail) > 0 && len(stripeToken) > 0 {
-				if err := bcgo.Pull(aliases, node.Cache, node.Network); err != nil {
+				if err := aliases.Pull(node.Cache, node.Network); err != nil {
 					log.Println(err)
 				}
 
 				// Get rsa.PublicKey for Alias
-				publicKey, err := aliases.GetPublicKey(node.Cache, node.Network, alias[0])
+				publicKey, err := aliasgo.GetPublicKey(aliases, node.Cache, node.Network, alias[0])
 				if err != nil {
 					log.Println(err)
 					return
@@ -125,10 +125,10 @@ func RegistrationHandler(aliases *aliasgo.AliasChannel, registrations *bcgo.PoWC
 					return
 				}
 
-				if err := bcgo.LoadCachedHead(registrations, node.Cache); err != nil {
+				if err := registrations.LoadCachedHead(node.Cache); err != nil {
 					log.Println(err)
 				}
-				if err := bcgo.Pull(registrations, node.Cache, node.Network); err != nil {
+				if err := registrations.Pull(node.Cache, node.Network); err != nil {
 					log.Println(err)
 				}
 				_, err = node.Write(bcgo.Timestamp(), registrations, acl, nil, registrationData)
@@ -137,12 +137,12 @@ func RegistrationHandler(aliases *aliasgo.AliasChannel, registrations *bcgo.PoWC
 					return
 				}
 
-				registrationHash, registrationBlock, err := node.Mine(registrations, listener)
+				registrationHash, registrationBlock, err := node.Mine(registrations, threshold, listener)
 				if err != nil {
 					log.Println(err)
 					return
 				}
-				if err := bcgo.Push(registrations, node.Cache, node.Network); err != nil {
+				if err := registrations.Push(node.Cache, node.Network); err != nil {
 					log.Println(err)
 				}
 				registrationReference := &bcgo.Reference{
@@ -173,7 +173,7 @@ func RegistrationHandler(aliases *aliasgo.AliasChannel, registrations *bcgo.PoWC
 	}
 }
 
-func SubscriptionHandler(aliases *aliasgo.AliasChannel, subscriptions *bcgo.PoWChannel, node *bcgo.Node, listener bcgo.MiningListener, template *template.Template, redirect, productId, planId string) func(w http.ResponseWriter, r *http.Request) {
+func SubscriptionHandler(aliases *bcgo.Channel, subscriptions *bcgo.Channel, node *bcgo.Node, threshold uint64, listener bcgo.MiningListener, template *template.Template, redirect, productId, planId string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
 		switch r.Method {
@@ -200,12 +200,12 @@ func SubscriptionHandler(aliases *aliasgo.AliasChannel, subscriptions *bcgo.PoWC
 			customerId := r.Form["customerId"]
 
 			if len(alias) > 0 && len(customerId) > 0 {
-				if err := bcgo.Pull(aliases, node.Cache, node.Network); err != nil {
+				if err := aliases.Pull(node.Cache, node.Network); err != nil {
 					log.Println(err)
 				}
 
 				// Get rsa.PublicKey for Alias
-				publicKey, err := aliases.GetPublicKey(node.Cache, node.Network, alias[0])
+				publicKey, err := aliasgo.GetPublicKey(aliases, node.Cache, node.Network, alias[0])
 				if err != nil {
 					log.Println(err)
 					return
@@ -232,10 +232,10 @@ func SubscriptionHandler(aliases *aliasgo.AliasChannel, subscriptions *bcgo.PoWC
 					return
 				}
 
-				if err := bcgo.LoadCachedHead(subscriptions, node.Cache); err != nil {
+				if err := subscriptions.LoadCachedHead(node.Cache); err != nil {
 					log.Println(err)
 				}
-				if err := bcgo.Pull(subscriptions, node.Cache, node.Network); err != nil {
+				if err := subscriptions.Pull(node.Cache, node.Network); err != nil {
 					log.Println(err)
 				}
 				_, err = node.Write(bcgo.Timestamp(), subscriptions, acl, nil, subscriptionData)
@@ -244,12 +244,12 @@ func SubscriptionHandler(aliases *aliasgo.AliasChannel, subscriptions *bcgo.PoWC
 					return
 				}
 
-				subscriptionHash, subscriptionBlock, err := node.Mine(subscriptions, listener)
+				subscriptionHash, subscriptionBlock, err := node.Mine(subscriptions, threshold, listener)
 				if err != nil {
 					log.Println(err)
 					return
 				}
-				if err := bcgo.Push(subscriptions, node.Cache, node.Network); err != nil {
+				if err := subscriptions.Push(node.Cache, node.Network); err != nil {
 					log.Println(err)
 				}
 				subscriptionReference := &bcgo.Reference{

@@ -150,7 +150,7 @@ func HeadPortHandler(cache bcgo.Cache, network bcgo.Network) func(conn net.Conn)
 	}
 }
 
-func BroadcastPortHandler(cache bcgo.Cache, network bcgo.Network, open func(string) (bcgo.Channel, error)) func(conn net.Conn) {
+func BroadcastPortHandler(cache bcgo.Cache, network bcgo.Network, open func(string) (*bcgo.Channel, error)) func(conn net.Conn) {
 	inflight := make(map[string]bool)
 	mutex := sync.RWMutex{}
 	return func(conn net.Conn) {
@@ -226,7 +226,7 @@ func BroadcastPortHandler(cache bcgo.Cache, network bcgo.Network, open func(stri
 			}
 		}
 
-		if err := bcgo.Update(channel, cache, network, hash, block); err != nil {
+		if err := channel.Update(cache, network, hash, block); err != nil {
 			log.Println(err)
 			// return - Must send head reference back
 		}

@@ -67,3 +67,17 @@ func makeGetChannelListRequest(channel string) *http.Request {
 	request, _ := http.NewRequest(http.MethodGet, "/channels", nil)
 	return request
 }
+
+func TestPeriodicValidationHandler(t *testing.T) {
+	t.Run("Exists", func(t *testing.T) {
+		// TODO
+	})
+	t.Run("NotExists", func(t *testing.T) {
+		// TODO
+	})
+}
+
+func makePeriodicValidationRequest(hash string) *http.Request {
+	request, _ := http.NewRequest(http.MethodGet, "/year?hash="+hash, nil)
+	return request
+}

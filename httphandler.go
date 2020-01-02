@@ -123,8 +123,7 @@ func BlockHandler(cache bcgo.Cache, network bcgo.Network, template *template.Tem
 					Nonce:     fmt.Sprintf("%d", block.Nonce),
 					Entry:     entries,
 				}
-				err = template.Execute(w, data)
-				if err != nil {
+				if err := template.Execute(w, data); err != nil {
 					log.Println(err)
 					return
 				}
@@ -159,8 +158,7 @@ func ChannelHandler(cache bcgo.Cache, network bcgo.Network, template *template.T
 					Timestamp: bcgo.TimestampToString(reference.Timestamp),
 					Hash:      base64.RawURLEncoding.EncodeToString(reference.BlockHash),
 				}
-				err = template.Execute(w, data)
-				if err != nil {
+				if err := template.Execute(w, data); err != nil {
 					log.Println(err)
 					return
 				}
@@ -173,7 +171,7 @@ func ChannelHandler(cache bcgo.Cache, network bcgo.Network, template *template.T
 	}
 }
 
-func ChannelListHandler(cache bcgo.Cache, network bcgo.Network, template *template.Template, list func() []bcgo.Channel) func(w http.ResponseWriter, r *http.Request) {
+func ChannelListHandler(cache bcgo.Cache, network bcgo.Network, template *template.Template, list func() []*bcgo.Channel) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
 		switch r.Method {
@@ -204,6 +202,46 @@ func ChannelListHandler(cache bcgo.Cache, network bcgo.Network, template *templa
 			if err := template.Execute(w, data); err != nil {
 				log.Println(err)
 				return
+			}
+		default:
+			log.Println("Unsupported method", r.Method)
+		}
+	}
+}
+
+func PeriodicValidationHandler(channel *bcgo.Channel, cache bcgo.Cache, network bcgo.Network, template *template.Template) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
+		switch r.Method {
+		case "GET":
+			hash := netgo.GetQueryParameter(r.URL.Query(), "hash")
+			log.Println("Hash", hash)
+			hashBytes := channel.GetHead()
+			var err error
+			if len(hash) > 0 {
+				hashBytes, err = base64.RawURLEncoding.DecodeString(hash)
+				if err != nil {
+					log.Println(err)
+					return
+				}
+			}
+			block, err := bcgo.GetBlock(channel.GetName(), cache, network, hashBytes)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			if block != nil {
+				data := struct {
+					// TODO
+				}{
+					// TODO
+				}
+				if err := template.Execute(w, data); err != nil {
+					log.Println(err)
+					return
+				}
+			} else {
+				w.WriteHeader(http.StatusNotFound)
 			}
 		default:
 			log.Println("Unsupported method", r.Method)

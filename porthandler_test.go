@@ -189,7 +189,7 @@ func TestHeadPortHandler(t *testing.T) {
 
 func TestBroadcastPortHandler(t *testing.T) {
 	t.Run("NoSuchChannel", func(t *testing.T) {
-		open := func(name string) (bcgo.Channel, error) {
+		open := func(name string) (*bcgo.Channel, error) {
 			return nil, errors.New("No such channel")
 		}
 		cache := bcgo.NewMemoryCache(10)
@@ -228,11 +228,10 @@ func TestBroadcastPortHandler(t *testing.T) {
 			t.Fatal(err)
 		}
 		cache := bcgo.NewMemoryCache(10)
-		channel := &bcgo.PoWChannel{
-			Name:      "Test",
-			Threshold: 0,
+		channel := &bcgo.Channel{
+			Name: "Test",
 		}
-		open := func(name string) (bcgo.Channel, error) {
+		open := func(name string) (*bcgo.Channel, error) {
 			if name == "Test" {
 				return channel, nil
 			}
@@ -285,11 +284,10 @@ func TestBroadcastPortHandler(t *testing.T) {
 			t.Fatal(err)
 		}
 		cache := bcgo.NewMemoryCache(10)
-		channel := &bcgo.PoWChannel{
-			Name:      "Test",
-			Threshold: 0,
+		channel := &bcgo.Channel{
+			Name: "Test",
 		}
-		open := func(name string) (bcgo.Channel, error) {
+		open := func(name string) (*bcgo.Channel, error) {
 			if name == "Test" {
 				return channel, nil
 			}
@@ -356,14 +354,13 @@ func TestBroadcastPortHandler(t *testing.T) {
 			ChannelName: "Test",
 			BlockHash:   serverHash,
 		})
-		channel := &bcgo.PoWChannel{
-			Name:      "Test",
-			Threshold: 0,
+		channel := &bcgo.Channel{
+			Name: "Test",
 		}
-		if err := bcgo.LoadHead(channel, cache, nil); err != nil {
+		if err := channel.LoadHead(cache, nil); err != nil {
 			t.Fatal(err)
 		}
-		open := func(name string) (bcgo.Channel, error) {
+		open := func(name string) (*bcgo.Channel, error) {
 			if name == "Test" {
 				return channel, nil
 			}
@@ -426,14 +423,13 @@ func TestBroadcastPortHandler(t *testing.T) {
 			ChannelName: "Test",
 			BlockHash:   serverHash2,
 		})
-		channel := &bcgo.PoWChannel{
-			Name:      "Test",
-			Threshold: 0,
+		channel := &bcgo.Channel{
+			Name: "Test",
 		}
-		if err := bcgo.LoadHead(channel, cache, nil); err != nil {
+		if err := channel.LoadHead(cache, nil); err != nil {
 			t.Fatal(err)
 		}
-		open := func(name string) (bcgo.Channel, error) {
+		open := func(name string) (*bcgo.Channel, error) {
 			if name == "Test" {
 				return channel, nil
 			}
