@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"github.com/AletheiaWareLLC/bcgo"
+	"github.com/AletheiaWareLLC/cryptogo"
 	"log"
 	"net"
 	"sync"
@@ -161,7 +162,7 @@ func BroadcastPortHandler(cache bcgo.Cache, network bcgo.Network, open func(stri
 			log.Println(err)
 			return
 		}
-		hash, err := bcgo.HashProtobuf(block)
+		hash, err := cryptogo.HashProtobuf(block)
 		if err != nil {
 			log.Println(err)
 			return
@@ -207,7 +208,7 @@ func BroadcastPortHandler(cache bcgo.Cache, network bcgo.Network, open func(stri
 						log.Println(err)
 						return
 					}
-					bh, err := bcgo.HashProtobuf(b)
+					bh, err := cryptogo.HashProtobuf(b)
 					if err != nil {
 						log.Println(err)
 						return

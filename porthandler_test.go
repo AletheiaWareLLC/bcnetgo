@@ -22,6 +22,7 @@ import (
 	"errors"
 	"github.com/AletheiaWareLLC/bcgo"
 	"github.com/AletheiaWareLLC/bcnetgo"
+	"github.com/AletheiaWareLLC/cryptogo"
 	"net"
 	"testing"
 )
@@ -33,7 +34,7 @@ func TestBlockPortHandler(t *testing.T) {
 			ChannelName: "Test",
 			Length:      1,
 		}
-		serverHash, err := bcgo.HashProtobuf(serverBlock)
+		serverHash, err := cryptogo.HashProtobuf(serverBlock)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -66,7 +67,7 @@ func TestBlockPortHandler(t *testing.T) {
 		if err := bcgo.ReadDelimitedProtobuf(reader, block); err != nil {
 			t.Fatal(err)
 		}
-		hash, err := bcgo.HashProtobuf(block)
+		hash, err := cryptogo.HashProtobuf(block)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -121,7 +122,7 @@ func TestHeadPortHandler(t *testing.T) {
 			ChannelName: "Test",
 			Length:      1,
 		}
-		serverHash, err := bcgo.HashProtobuf(serverBlock)
+		serverHash, err := cryptogo.HashProtobuf(serverBlock)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -222,7 +223,7 @@ func TestBroadcastPortHandler(t *testing.T) {
 			ChannelName: "Test",
 			Length:      1,
 		}
-		clientHash, err := bcgo.HashProtobuf(clientBlock)
+		clientHash, err := cryptogo.HashProtobuf(clientBlock)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -269,7 +270,7 @@ func TestBroadcastPortHandler(t *testing.T) {
 			ChannelName: "Test",
 			Length:      1,
 		}
-		clientHash1, err := bcgo.HashProtobuf(clientBlock1)
+		clientHash1, err := cryptogo.HashProtobuf(clientBlock1)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -279,7 +280,7 @@ func TestBroadcastPortHandler(t *testing.T) {
 			Length:      2,
 			Previous:    clientHash1,
 		}
-		clientHash2, err := bcgo.HashProtobuf(clientBlock2)
+		clientHash2, err := cryptogo.HashProtobuf(clientBlock2)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -345,7 +346,7 @@ func TestBroadcastPortHandler(t *testing.T) {
 			ChannelName: "Test",
 			Length:      1,
 		}
-		serverHash, err := bcgo.HashProtobuf(serverBlock)
+		serverHash, err := cryptogo.HashProtobuf(serverBlock)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -404,7 +405,7 @@ func TestBroadcastPortHandler(t *testing.T) {
 			ChannelName: "Test",
 			Length:      1,
 		}
-		serverHash1, err := bcgo.HashProtobuf(serverBlock1)
+		serverHash1, err := cryptogo.HashProtobuf(serverBlock1)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -414,7 +415,7 @@ func TestBroadcastPortHandler(t *testing.T) {
 			Length:      2,
 			Previous:    serverHash1,
 		}
-		serverHash2, err := bcgo.HashProtobuf(serverBlock2)
+		serverHash2, err := cryptogo.HashProtobuf(serverBlock2)
 		if err != nil {
 			t.Fatal(err)
 		}

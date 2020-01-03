@@ -18,7 +18,7 @@ package bcnetgo
 
 import (
 	"encoding/base64"
-	"github.com/AletheiaWareLLC/bcgo"
+	"github.com/AletheiaWareLLC/cryptogo"
 	"github.com/AletheiaWareLLC/netgo"
 	"github.com/golang/protobuf/proto"
 	"log"
@@ -26,16 +26,16 @@ import (
 	"time"
 )
 
-type KeyShareStore map[string]*bcgo.KeyShare
+type KeyShareStore map[string]*cryptogo.KeyShare
 
 func KeyShareHandler(keys KeyShareStore, timeout time.Duration) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
 		switch r.Method {
 		case "GET":
-			alias := netgo.GetQueryParameter(r.URL.Query(), "alias")
-			log.Println("Alias", alias)
-			if k, ok := keys[alias]; ok {
+			name := netgo.GetQueryParameter(r.URL.Query(), "name")
+			log.Println("Name", name)
+			if k, ok := keys[name]; ok {
 				data, err := proto.Marshal(k)
 				if err != nil {
 					log.Println(err)
@@ -53,8 +53,8 @@ func KeyShareHandler(keys KeyShareStore, timeout time.Duration) func(w http.Resp
 		case "POST":
 			r.ParseForm()
 			log.Println("Request", r)
-			alias := r.Form["alias"]
-			log.Println("Alias", alias)
+			name := r.Form["name"]
+			log.Println("Name", name)
 			publicKey := r.Form["publicKey"]
 			log.Println("PublicKey", publicKey)
 			publicKeyFormat := r.Form["publicKeyFormat"]
@@ -66,37 +66,37 @@ func KeyShareHandler(keys KeyShareStore, timeout time.Duration) func(w http.Resp
 			password := r.Form["password"]
 			log.Println("Password", password)
 
-			if len(alias) > 0 && len(publicKey) > 0 && len(publicKeyFormat) > 0 && len(privateKey) > 0 && len(privateKeyFormat) > 0 && len(password) > 0 {
-				a := alias[0]
+			if len(name) > 0 && len(publicKey) > 0 && len(publicKeyFormat) > 0 && len(privateKey) > 0 && len(privateKeyFormat) > 0 && len(password) > 0 {
+				n := name[0]
 				publicKey, err := base64.RawURLEncoding.DecodeString(publicKey[0])
 				if err != nil {
 					log.Println(err)
 					return
 				}
-				pubFormatValue, ok := bcgo.PublicKeyFormat_value[publicKeyFormat[0]]
+				pubFormatValue, ok := cryptogo.PublicKeyFormat_value[publicKeyFormat[0]]
 				if !ok {
 					log.Println("Unrecognized Public Key Format")
 					return
 				}
-				pubFormat := bcgo.PublicKeyFormat(pubFormatValue)
+				pubFormat := cryptogo.PublicKeyFormat(pubFormatValue)
 				privateKey, err := base64.RawURLEncoding.DecodeString(privateKey[0])
 				if err != nil {
 					log.Println(err)
 					return
 				}
-				privFormatValue, ok := bcgo.PrivateKeyFormat_value[privateKeyFormat[0]]
+				privFormatValue, ok := cryptogo.PrivateKeyFormat_value[privateKeyFormat[0]]
 				if !ok {
 					log.Println("Unrecognized Private Key Format")
 					return
 				}
-				privFormat := bcgo.PrivateKeyFormat(privFormatValue)
+				privFormat := cryptogo.PrivateKeyFormat(privFormatValue)
 				password, err := base64.RawURLEncoding.DecodeString(password[0])
 				if err != nil {
 					log.Println(err)
 					return
 				}
-				keys[a] = &bcgo.KeyShare{
-					Alias:         a,
+				keys[n] = &cryptogo.KeyShare{
+					Name:          n,
 					PublicKey:     publicKey,
 					PublicFormat:  pubFormat,
 					PrivateKey:    privateKey,
@@ -106,8 +106,8 @@ func KeyShareHandler(keys KeyShareStore, timeout time.Duration) func(w http.Resp
 				go func() {
 					// Delete mapping after timeout
 					time.Sleep(timeout)
-					log.Println("Expiring Keys", a)
-					delete(keys, a)
+					log.Println("Expiring Keys", n)
+					delete(keys, n)
 				}()
 			} else {
 				w.WriteHeader(http.StatusBadRequest)

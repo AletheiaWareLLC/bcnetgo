@@ -18,8 +18,8 @@ package bcnetgo_test
 
 import (
 	"encoding/base64"
-	"github.com/AletheiaWareLLC/bcgo"
 	"github.com/AletheiaWareLLC/bcnetgo"
+	"github.com/AletheiaWareLLC/cryptogo"
 	"github.com/golang/protobuf/proto"
 	"log"
 	"net/http"
@@ -33,8 +33,8 @@ import (
 func TestKeyHandler(t *testing.T) {
 	t.Run("GETExists", func(t *testing.T) {
 		kss := make(bcnetgo.KeyShareStore)
-		ks := &bcgo.KeyShare{
-			Alias: "Alice",
+		ks := &cryptogo.KeyShare{
+			Name: "Alice",
 		}
 		kss["Alice"] = ks
 		handler := bcnetgo.KeyShareHandler(kss, 0)
@@ -48,7 +48,7 @@ func TestKeyHandler(t *testing.T) {
 		}
 
 		expected := ks.String()
-		got := &bcgo.KeyShare{}
+		got := &cryptogo.KeyShare{}
 		if err := proto.Unmarshal(response.Body.Bytes(), got); err != nil {
 			t.Fatal(err)
 		}
@@ -102,8 +102,8 @@ func TestKeyHandler(t *testing.T) {
 		}
 
 		log.Println(ks)
-		if ks.Alias != "Alice" {
-			t.Fatalf("Incorrect KeyShare alias; expected 'Alice', got '%s'", ks.Alias)
+		if ks.Name != "Alice" {
+			t.Fatalf("Incorrect KeyShare name; expected 'Alice', got '%s'", ks.Name)
 		}
 		if string(ks.PublicKey) != "Foo" {
 			t.Fatalf("Incorrect KeyShare public key; expected 'Foo', got '%s'", string(ks.PublicKey))
@@ -159,13 +159,13 @@ func TestKeyHandler(t *testing.T) {
 }
 
 func makeGetRequest() *http.Request {
-	request, _ := http.NewRequest(http.MethodGet, "/keys?alias=Alice", nil)
+	request, _ := http.NewRequest(http.MethodGet, "/keys?name=Alice", nil)
 	return request
 }
 
 func makePostRequest() *http.Request {
 	request, _ := http.NewRequest(http.MethodPost, "/keys", strings.NewReader(url.Values{
-		"alias":            {"Alice"},
+		"name":             {"Alice"},
 		"publicKey":        {base64.RawURLEncoding.EncodeToString([]byte("Foo"))},
 		"publicKeyFormat":  {"PKIX"},
 		"privateKey":       {base64.RawURLEncoding.EncodeToString([]byte("Bar"))},
