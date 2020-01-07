@@ -131,7 +131,7 @@ func RegistrationHandler(aliases *aliasgo.AliasChannel, registrations *bcgo.PoWC
 				if err := bcgo.Pull(registrations, node.Cache, node.Network); err != nil {
 					log.Println(err)
 				}
-				_, err = node.Write(registrations, acl, nil, registrationData)
+				_, err = node.Write(bcgo.Timestamp(), registrations, acl, nil, registrationData)
 				if err != nil {
 					log.Println(err)
 					return
@@ -238,7 +238,7 @@ func SubscriptionHandler(aliases *aliasgo.AliasChannel, subscriptions *bcgo.PoWC
 				if err := bcgo.Pull(subscriptions, node.Cache, node.Network); err != nil {
 					log.Println(err)
 				}
-				_, err = node.Write(subscriptions, acl, nil, subscriptionData)
+				_, err = node.Write(bcgo.Timestamp(), subscriptions, acl, nil, subscriptionData)
 				if err != nil {
 					log.Println(err)
 					return
