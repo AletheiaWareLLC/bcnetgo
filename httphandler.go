@@ -28,7 +28,7 @@ import (
 
 func BlockHandler(cache bcgo.Cache, network bcgo.Network, template *template.Template) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
+		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path, r.Header)
 		switch r.Method {
 		case "GET":
 			channel := netgo.GetQueryParameter(r.URL.Query(), "channel")
@@ -138,7 +138,7 @@ func BlockHandler(cache bcgo.Cache, network bcgo.Network, template *template.Tem
 
 func ChannelHandler(cache bcgo.Cache, network bcgo.Network, template *template.Template) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
+		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path, r.Header)
 		switch r.Method {
 		case "GET":
 			channel := netgo.GetQueryParameter(r.URL.Query(), "channel")
@@ -173,7 +173,7 @@ func ChannelHandler(cache bcgo.Cache, network bcgo.Network, template *template.T
 
 func ChannelListHandler(cache bcgo.Cache, network bcgo.Network, template *template.Template, list func() []*bcgo.Channel) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
+		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path, r.Header)
 		switch r.Method {
 		case "GET":
 			type TemplateChannel struct {
@@ -211,7 +211,7 @@ func ChannelListHandler(cache bcgo.Cache, network bcgo.Network, template *templa
 
 func PeriodicValidationHandler(channel *bcgo.Channel, cache bcgo.Cache, network bcgo.Network, template *template.Template) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
+		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path, r.Header)
 		switch r.Method {
 		case "GET":
 			hash := netgo.GetQueryParameter(r.URL.Query(), "hash")

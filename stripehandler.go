@@ -31,9 +31,9 @@ import (
 	"net/http"
 )
 
-func StripeWebhookHandler(callback func(stripe.Event)) func(w http.ResponseWriter, r *http.Request) {
+func StripeWebhookHandler(callback func(*stripe.Event)) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
+		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path, r.Header)
 		log.Println("Stripe Webhook", r)
 		data, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -45,17 +45,29 @@ func StripeWebhookHandler(callback func(stripe.Event)) func(w http.ResponseWrite
 			log.Println(err)
 			return
 		}
-		log.Println("Event", event)
+		log.Println("Stripe Event", event)
+		/*
+			log.Println("Account", event.Account)
+			log.Println("Created", event.Created)
+			log.Println("Data Object", event.Data.Object)
+			log.Println("Data PreviousAttributes", event.Data.PreviousAttributes)
+			log.Println("ID", event.ID)
+			log.Println("Livemode", event.Livemode)
+			log.Println("PendingWebhooks", event.PendingWebhooks)
+			log.Println("Request ID", event.Request.ID)
+			log.Println("Request IdempotencyKey", event.Request.IdempotencyKey)
+			log.Println("Type", event.Type)
+		*/
 
 		w.WriteHeader(http.StatusOK)
 
-		callback(event)
+		callback(&event)
 	}
 }
 
 func RegistrationHandler(aliases *bcgo.Channel, registrations *bcgo.Channel, node *bcgo.Node, threshold uint64, listener bcgo.MiningListener, template *template.Template, publishableKey string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
+		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path, r.Header)
 		switch r.Method {
 		case "GET":
 			alias := netgo.GetQueryParameter(r.URL.Query(), "alias")
@@ -175,7 +187,7 @@ func RegistrationHandler(aliases *bcgo.Channel, registrations *bcgo.Channel, nod
 
 func SubscriptionHandler(aliases *bcgo.Channel, subscriptions *bcgo.Channel, node *bcgo.Node, threshold uint64, listener bcgo.MiningListener, template *template.Template, redirect, productId, planId string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path)
+		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path, r.Header)
 		switch r.Method {
 		case "GET":
 			alias := netgo.GetQueryParameter(r.URL.Query(), "alias")
