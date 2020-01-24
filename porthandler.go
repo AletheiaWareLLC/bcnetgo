@@ -197,7 +197,7 @@ func BroadcastPortHandler(cache bcgo.Cache, network bcgo.Network, open func(stri
 				if err != nil {
 					// Request block from broadcaster
 					if err := bcgo.WriteDelimitedProtobuf(writer, &bcgo.Reference{
-						ChannelName: channel.GetName(),
+						ChannelName: channel.Name,
 						BlockHash:   h,
 					}); err != nil {
 						log.Println(err)
@@ -233,9 +233,9 @@ func BroadcastPortHandler(cache bcgo.Cache, network bcgo.Network, open func(stri
 
 		// Reply with current head
 		if err := bcgo.WriteDelimitedProtobuf(writer, &bcgo.Reference{
-			Timestamp:   channel.GetTimestamp(),
-			ChannelName: channel.GetName(),
-			BlockHash:   channel.GetHead(),
+			Timestamp:   channel.Timestamp,
+			ChannelName: channel.Name,
+			BlockHash:   channel.Head,
 		}); err != nil {
 			log.Println(err)
 			return

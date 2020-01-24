@@ -183,12 +183,12 @@ func ChannelListHandler(cache bcgo.Cache, network bcgo.Network, template *templa
 			}
 			channels := make([]TemplateChannel, 0)
 			for _, channel := range list() {
-				reference, err := bcgo.GetHeadReference(channel.GetName(), cache, network)
+				reference, err := bcgo.GetHeadReference(channel.Name, cache, network)
 				if err != nil {
 					log.Println(err)
 				} else {
 					channels = append(channels, TemplateChannel{
-						Name:      channel.GetName(),
+						Name:      channel.Name,
 						Timestamp: bcgo.TimestampToString(reference.Timestamp),
 						Hash:      base64.RawURLEncoding.EncodeToString(reference.BlockHash),
 					})
@@ -216,7 +216,7 @@ func PeriodicValidationHandler(channel *bcgo.Channel, cache bcgo.Cache, network 
 		case "GET":
 			hash := netgo.GetQueryParameter(r.URL.Query(), "hash")
 			log.Println("Hash", hash)
-			hashBytes := channel.GetHead()
+			hashBytes := channel.Head
 			var err error
 			if len(hash) > 0 {
 				hashBytes, err = base64.RawURLEncoding.DecodeString(hash)
@@ -225,7 +225,7 @@ func PeriodicValidationHandler(channel *bcgo.Channel, cache bcgo.Cache, network 
 					return
 				}
 			}
-			block, err := bcgo.GetBlock(channel.GetName(), cache, network, hashBytes)
+			block, err := bcgo.GetBlock(channel.Name, cache, network, hashBytes)
 			if err != nil {
 				log.Println(err)
 				return
