@@ -30,7 +30,7 @@ func Bind(port int, handler func(net.Conn)) {
 		return
 	}
 	defer l.Close()
-	log.Println("Listening on" + address)
+	log.Println("Listening on", address)
 	for {
 		conn, err := l.Accept()
 		if err != nil {
