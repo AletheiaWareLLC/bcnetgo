@@ -27,7 +27,7 @@ import (
 	"testing"
 )
 
-func TestBlockPortHandler(t *testing.T) {
+func TestBlockPortTCPHandler(t *testing.T) {
 	t.Run("BlockExists", func(t *testing.T) {
 		serverBlock := &bcgo.Block{
 			Timestamp:   1234,
@@ -45,7 +45,7 @@ func TestBlockPortHandler(t *testing.T) {
 			ChannelName: "Test",
 			BlockHash:   serverHash,
 		})
-		handler := bcnetgo.BlockPortHandler(cache, &bcgo.TcpNetwork{})
+		handler := bcnetgo.BlockPortTCPHandler(cache, bcgo.NewTCPNetwork())
 		server, client := net.Pipe()
 		defer client.Close()
 
@@ -84,7 +84,7 @@ func TestBlockPortHandler(t *testing.T) {
 	})
 	t.Run("BlockNotExists", func(t *testing.T) {
 		cache := bcgo.NewMemoryCache(10)
-		handler := bcnetgo.BlockPortHandler(cache, &bcgo.TcpNetwork{})
+		handler := bcnetgo.BlockPortTCPHandler(cache, bcgo.NewTCPNetwork())
 		server, client := net.Pipe()
 		defer client.Close()
 
@@ -115,7 +115,7 @@ func TestBlockPortHandler(t *testing.T) {
 	})
 }
 
-func TestHeadPortHandler(t *testing.T) {
+func TestHeadPortTCPHandler(t *testing.T) {
 	t.Run("HeadExists", func(t *testing.T) {
 		serverBlock := &bcgo.Block{
 			Timestamp:   1234,
@@ -133,7 +133,7 @@ func TestHeadPortHandler(t *testing.T) {
 		cache := bcgo.NewMemoryCache(10)
 		cache.PutBlock(serverHash, serverBlock)
 		cache.PutHead("Test", serverHead)
-		handler := bcnetgo.HeadPortHandler(cache, &bcgo.TcpNetwork{})
+		handler := bcnetgo.HeadPortTCPHandler(cache, bcgo.NewTCPNetwork())
 		server, client := net.Pipe()
 		defer client.Close()
 
@@ -163,7 +163,7 @@ func TestHeadPortHandler(t *testing.T) {
 	})
 	t.Run("HeadNotExists", func(t *testing.T) {
 		cache := bcgo.NewMemoryCache(10)
-		handler := bcnetgo.HeadPortHandler(cache, &bcgo.TcpNetwork{})
+		handler := bcnetgo.HeadPortTCPHandler(cache, bcgo.NewTCPNetwork())
 		server, client := net.Pipe()
 		defer client.Close()
 
@@ -187,13 +187,13 @@ func TestHeadPortHandler(t *testing.T) {
 	})
 }
 
-func TestBroadcastPortHandler(t *testing.T) {
+func TestBroadcastPortTCPHandler(t *testing.T) {
 	t.Run("NoSuchChannel", func(t *testing.T) {
 		open := func(name string) (*bcgo.Channel, error) {
 			return nil, errors.New("No such channel")
 		}
 		cache := bcgo.NewMemoryCache(10)
-		handler := bcnetgo.BroadcastPortHandler(cache, &bcgo.TcpNetwork{}, open)
+		handler := bcnetgo.BroadcastPortTCPHandler(cache, bcgo.NewTCPNetwork(), open)
 		server, client := net.Pipe()
 		defer client.Close()
 
@@ -237,7 +237,7 @@ func TestBroadcastPortHandler(t *testing.T) {
 			}
 			return nil, errors.New("No such channel")
 		}
-		handler := bcnetgo.BroadcastPortHandler(cache, &bcgo.TcpNetwork{}, open)
+		handler := bcnetgo.BroadcastPortTCPHandler(cache, bcgo.NewTCPNetwork(), open)
 		server, client := net.Pipe()
 		defer client.Close()
 
@@ -293,7 +293,7 @@ func TestBroadcastPortHandler(t *testing.T) {
 			}
 			return nil, errors.New("No such channel")
 		}
-		handler := bcnetgo.BroadcastPortHandler(cache, &bcgo.TcpNetwork{}, open)
+		handler := bcnetgo.BroadcastPortTCPHandler(cache, bcgo.NewTCPNetwork(), open)
 		server, client := net.Pipe()
 		defer client.Close()
 
@@ -366,7 +366,7 @@ func TestBroadcastPortHandler(t *testing.T) {
 			}
 			return nil, errors.New("No such channel")
 		}
-		handler := bcnetgo.BroadcastPortHandler(cache, &bcgo.TcpNetwork{}, open)
+		handler := bcnetgo.BroadcastPortTCPHandler(cache, bcgo.NewTCPNetwork(), open)
 		server, client := net.Pipe()
 		defer client.Close()
 
@@ -435,7 +435,7 @@ func TestBroadcastPortHandler(t *testing.T) {
 			}
 			return nil, errors.New("No such channel")
 		}
-		handler := bcnetgo.BroadcastPortHandler(cache, &bcgo.TcpNetwork{}, open)
+		handler := bcnetgo.BroadcastPortTCPHandler(cache, bcgo.NewTCPNetwork(), open)
 		server, client := net.Pipe()
 		defer client.Close()
 

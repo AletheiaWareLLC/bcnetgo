@@ -22,9 +22,13 @@ import (
 	"net"
 )
 
-func Bind(port int, handler func(net.Conn)) {
-	address := fmt.Sprintf(":%d", port)
-	l, err := net.Listen("tcp", address)
+func BindTCP(port int, handler func(net.Conn)) {
+	address, err := net.ResolveTCPAddr("tcp", fmt.Sprintf(":%d", port))
+	if err != nil {
+		log.Println("Error resolving", err)
+		return
+	}
+	l, err := net.ListenTCP("tcp", address)
 	if err != nil {
 		log.Println("Error listening", err)
 		return
@@ -32,7 +36,7 @@ func Bind(port int, handler func(net.Conn)) {
 	defer l.Close()
 	log.Println("Listening on", address)
 	for {
-		conn, err := l.Accept()
+		conn, err := l.AcceptTCP()
 		if err != nil {
 			log.Println("Error accepting", err)
 			return

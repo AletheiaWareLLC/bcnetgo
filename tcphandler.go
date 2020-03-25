@@ -27,7 +27,23 @@ import (
 	"sync"
 )
 
-func BlockPortHandler(cache bcgo.Cache, network bcgo.Network) func(conn net.Conn) {
+func ConnectPortTCPHandler(network *bcgo.TCPNetwork) func(conn net.Conn) {
+	return func(conn net.Conn) {
+		defer conn.Close()
+		// TODO read/write handshake
+		// reader := bufio.NewReader(conn)
+		// writer := bufio.NewWriter(conn)
+		host, port, err := net.SplitHostPort(conn.RemoteAddr().String())
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		log.Println(host, port)
+		network.AddPeer(host)
+	}
+}
+
+func BlockPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork) func(conn net.Conn) {
 	inflight := make(map[string]bool)
 	mutex := sync.RWMutex{}
 	return func(conn net.Conn) {
@@ -109,7 +125,7 @@ func BlockPortHandler(cache bcgo.Cache, network bcgo.Network) func(conn net.Conn
 	}
 }
 
-func HeadPortHandler(cache bcgo.Cache, network bcgo.Network) func(conn net.Conn) {
+func HeadPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork) func(conn net.Conn) {
 	inflight := make(map[string]bool)
 	mutex := sync.RWMutex{}
 	return func(conn net.Conn) {
@@ -150,7 +166,7 @@ func HeadPortHandler(cache bcgo.Cache, network bcgo.Network) func(conn net.Conn)
 	}
 }
 
-func BroadcastPortHandler(cache bcgo.Cache, network bcgo.Network, open func(string) (*bcgo.Channel, error)) func(conn net.Conn) {
+func BroadcastPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork, open func(string) (*bcgo.Channel, error)) func(conn net.Conn) {
 	inflight := make(map[string]bool)
 	mutex := sync.RWMutex{}
 	return func(conn net.Conn) {
