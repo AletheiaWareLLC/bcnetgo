@@ -30,15 +30,32 @@ import (
 func ConnectPortTCPHandler(network *bcgo.TCPNetwork) func(conn net.Conn) {
 	return func(conn net.Conn) {
 		defer conn.Close()
-		// TODO read/write handshake
-		// reader := bufio.NewReader(conn)
-		// writer := bufio.NewWriter(conn)
+		reader := bufio.NewReader(conn)
+		writer := bufio.NewWriter(conn)
+		data := make([]byte, 32)
+		n, err := reader.Read(data[:])
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		if n <= 0 {
+			log.Println("Could not read data")
+			return
+		}
+		if _, err = writer.Write(data[:n]); err != nil {
+			log.Println(err)
+			return
+		}
+		if err = writer.Flush(); err != nil {
+			log.Println(err)
+			return
+		}
 		host, port, err := net.SplitHostPort(conn.RemoteAddr().String())
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		log.Println(host, port)
+		log.Println(host, port, string(data[:n]))
 		network.AddPeer(host)
 	}
 }
