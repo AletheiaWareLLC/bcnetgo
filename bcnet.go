@@ -18,9 +18,21 @@ package bcnetgo
 
 import (
 	"fmt"
+	"github.com/AletheiaWareLLC/bcgo"
 	"log"
 	"net"
 )
+
+func BindAllTCP(c bcgo.Cache, n *bcgo.TCPNetwork, cb func(string) (*bcgo.Channel, error)) {
+	// Serve Connect Requests
+	go BindTCP(bcgo.PORT_CONNECT, ConnectPortTCPHandler(n))
+	// Serve Block Requests
+	go BindTCP(bcgo.PORT_GET_BLOCK, BlockPortTCPHandler(c, n))
+	// Serve Head Requests
+	go BindTCP(bcgo.PORT_GET_HEAD, HeadPortTCPHandler(c, n))
+	// Serve Block Updates
+	go BindTCP(bcgo.PORT_BROADCAST, BroadcastPortTCPHandler(c, n, cb))
+}
 
 func BindTCP(port int, handler func(net.Conn)) {
 	address, err := net.ResolveTCPAddr("tcp", fmt.Sprintf(":%d", port))
