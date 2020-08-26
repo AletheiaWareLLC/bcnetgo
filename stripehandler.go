@@ -137,10 +137,7 @@ func RegistrationHandler(aliases *bcgo.Channel, registrations *bcgo.Channel, nod
 					return
 				}
 
-				if err := registrations.LoadCachedHead(node.Cache); err != nil {
-					log.Println(err)
-				}
-				if err := registrations.Pull(node.Cache, node.Network); err != nil {
+				if err := registrations.Refresh(node.Cache, node.Network); err != nil {
 					log.Println(err)
 				}
 				_, err = node.Write(bcgo.Timestamp(), registrations, acl, nil, registrationData)
@@ -244,10 +241,7 @@ func SubscriptionHandler(aliases *bcgo.Channel, subscriptions *bcgo.Channel, nod
 					return
 				}
 
-				if err := subscriptions.LoadCachedHead(node.Cache); err != nil {
-					log.Println(err)
-				}
-				if err := subscriptions.Pull(node.Cache, node.Network); err != nil {
+				if err := subscriptions.Refresh(node.Cache, node.Network); err != nil {
 					log.Println(err)
 				}
 				_, err = node.Write(bcgo.Timestamp(), subscriptions, acl, nil, subscriptionData)
