@@ -19,6 +19,7 @@ package bcnetgo
 import (
 	"bufio"
 	"crypto/rsa"
+	"fmt"
 	"github.com/AletheiaWareLLC/aliasgo"
 	"github.com/AletheiaWareLLC/bcgo"
 	"github.com/AletheiaWareLLC/financego"
@@ -71,20 +72,22 @@ func RegistrationHandler(aliases *bcgo.Channel, registrations *bcgo.Channel, nod
 		switch r.Method {
 		case "GET":
 			alias := netgo.GetQueryParameter(r.URL.Query(), "alias")
-			publicKey := netgo.GetQueryParameter(r.URL.Query(), "publicKey")
+			next := netgo.GetQueryParameter(r.URL.Query(), "next")
 			log.Println("Alias", alias)
-			log.Println("PublicKey", publicKey)
+			log.Println("Next", next)
 
 			data := struct {
 				Description string
 				Key         string
 				Name        string
 				Alias       string
+				Next        string
 			}{
 				Description: node.Alias,
 				Key:         publishableKey,
 				Name:        "Aletheia Ware LLC",
 				Alias:       alias,
+				Next:        next,
 			}
 			if err := template.Execute(w, data); err != nil {
 				log.Println(err)
@@ -104,6 +107,7 @@ func RegistrationHandler(aliases *bcgo.Channel, registrations *bcgo.Channel, nod
 			// stripeBillingAddressState := r.Form["stripeBillingAddressState"]
 			stripeToken := r.Form["stripeToken"]
 			// stripeTokenType := r.Form["stripeTokenType"]
+			next := r.Form["next"]
 
 			if len(alias) > 0 && len(stripeEmail) > 0 && len(stripeToken) > 0 {
 				if err := aliases.Pull(node.Cache, node.Network); err != nil {
@@ -173,6 +177,9 @@ func RegistrationHandler(aliases *bcgo.Channel, registrations *bcgo.Channel, nod
 						}
 						return
 					}
+				}
+				if len(next) > 0 {
+					http.Redirect(w, r, fmt.Sprintf("%s?alias=%s&customerId=%s", next, alias, stripeCustomer.ID), http.StatusFound)
 				}
 				http.Redirect(w, r, "/registered.html", http.StatusFound)
 			}
