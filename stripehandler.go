@@ -179,7 +179,7 @@ func RegistrationHandler(aliases *bcgo.Channel, registrations *bcgo.Channel, nod
 					}
 				}
 				if len(next) > 0 {
-					http.Redirect(w, r, fmt.Sprintf("%s?alias=%s&customerId=%s", next, alias, stripeCustomer.ID), http.StatusFound)
+					http.Redirect(w, r, fmt.Sprintf("%s?alias=%s&customerId=%s", next[0], alias[0], stripeCustomer.ID), http.StatusFound)
 				}
 				http.Redirect(w, r, "/registered.html", http.StatusFound)
 			}
