@@ -228,9 +228,7 @@ func TestBroadcastPortTCPHandler(t *testing.T) {
 			t.Fatal(err)
 		}
 		cache := bcgo.NewMemoryCache(10)
-		channel := &bcgo.Channel{
-			Name: "Test",
-		}
+		channel := bcgo.NewChannel("Test")
 		open := func(name string) (*bcgo.Channel, error) {
 			if name == "Test" {
 				return channel, nil
@@ -284,9 +282,7 @@ func TestBroadcastPortTCPHandler(t *testing.T) {
 			t.Fatal(err)
 		}
 		cache := bcgo.NewMemoryCache(10)
-		channel := &bcgo.Channel{
-			Name: "Test",
-		}
+		channel := bcgo.NewChannel("Test")
 		open := func(name string) (*bcgo.Channel, error) {
 			if name == "Test" {
 				return channel, nil
@@ -354,9 +350,7 @@ func TestBroadcastPortTCPHandler(t *testing.T) {
 			ChannelName: "Test",
 			BlockHash:   serverHash,
 		})
-		channel := &bcgo.Channel{
-			Name: "Test",
-		}
+		channel := bcgo.NewChannel("Test")
 		if err := channel.LoadHead(cache, nil); err != nil {
 			t.Fatal(err)
 		}
@@ -423,9 +417,7 @@ func TestBroadcastPortTCPHandler(t *testing.T) {
 			ChannelName: "Test",
 			BlockHash:   serverHash2,
 		})
-		channel := &bcgo.Channel{
-			Name: "Test",
-		}
+		channel := bcgo.NewChannel("Test")
 		if err := channel.LoadHead(cache, nil); err != nil {
 			t.Fatal(err)
 		}
