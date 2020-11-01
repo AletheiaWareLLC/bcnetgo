@@ -18,13 +18,10 @@ package bcnetgo
 
 import (
 	"bufio"
-	"crypto/rsa"
 	"fmt"
-	"github.com/AletheiaWareLLC/aliasgo"
 	"github.com/AletheiaWareLLC/bcgo"
 	"github.com/AletheiaWareLLC/financego"
 	"github.com/AletheiaWareLLC/netgo"
-	"github.com/golang/protobuf/proto"
 	"github.com/stripe/stripe-go"
 	"html/template"
 	"io/ioutil"
@@ -66,7 +63,7 @@ func StripeWebhookHandler(callback func(*stripe.Event)) func(w http.ResponseWrit
 	}
 }
 
-func RegistrationHandler(aliases *bcgo.Channel, registrations *bcgo.Channel, node *bcgo.Node, threshold uint64, listener bcgo.MiningListener, template *template.Template, publishableKey string) func(w http.ResponseWriter, r *http.Request) {
+func RegistrationHandler(merchantAlias, merchantName, merchantKey string, template *template.Template, callback func(string, string, string) (string, *bcgo.Reference, error)) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path, r.Header)
 		switch r.Method {
@@ -83,9 +80,9 @@ func RegistrationHandler(aliases *bcgo.Channel, registrations *bcgo.Channel, nod
 				Alias       string
 				Next        string
 			}{
-				Description: node.Alias,
-				Key:         publishableKey,
-				Name:        "Aletheia Ware LLC",
+				Description: merchantAlias,
+				Key:         merchantKey,
+				Name:        merchantName,
 				Alias:       alias,
 				Next:        next,
 			}
@@ -109,87 +106,49 @@ func RegistrationHandler(aliases *bcgo.Channel, registrations *bcgo.Channel, nod
 			// stripeTokenType := r.Form["stripeTokenType"]
 			next := r.Form["next"]
 
-			if len(alias) > 0 && len(stripeEmail) > 0 && len(stripeToken) > 0 {
-				if err := aliases.Pull(node.Cache, node.Network); err != nil {
-					log.Println(err)
-				}
-
-				// Get rsa.PublicKey for Alias
-				publicKey, err := aliasgo.GetPublicKey(aliases, node.Cache, node.Network, alias[0])
-				if err != nil {
-					log.Println(err)
-					return
-				}
-
-				// Create list of access (user + server)
-				acl := map[string]*rsa.PublicKey{
-					alias[0]:   publicKey,
-					node.Alias: &node.Key.PublicKey,
-				}
-				log.Println("Access", acl)
-
-				stripeCustomer, bcRegistration, err := financego.NewRegistration(node.Alias, alias[0], stripeEmail[0], stripeToken[0], alias[0]+" "+node.Alias)
-				if err != nil {
-					log.Println(err)
-					return
-				}
-				log.Println("StripeCustomer", stripeCustomer)
-				log.Println("BcRegistration", bcRegistration)
-				registrationData, err := proto.Marshal(bcRegistration)
-				if err != nil {
-					log.Println(err)
-					return
-				}
-
-				if err := registrations.Refresh(node.Cache, node.Network); err != nil {
-					log.Println(err)
-				}
-				_, err = node.Write(bcgo.Timestamp(), registrations, acl, nil, registrationData)
-				if err != nil {
-					log.Println(err)
-					return
-				}
-
-				registrationHash, registrationBlock, err := node.Mine(registrations, threshold, listener)
-				if err != nil {
-					log.Println(err)
-					return
-				}
-				if err := registrations.Push(node.Cache, node.Network); err != nil {
-					log.Println(err)
-				}
-				registrationReference := &bcgo.Reference{
-					Timestamp:   registrationBlock.Timestamp,
-					ChannelName: registrationBlock.ChannelName,
-					BlockHash:   registrationHash,
-				}
-				log.Println("RegistrationReference", registrationReference)
-
-				if len(api) > 0 {
-					switch api[0] {
-					case "1":
-						w.Write([]byte(stripeCustomer.ID))
-						w.Write([]byte("\n"))
-						return
-					case "2":
-						if err := bcgo.WriteDelimitedProtobuf(bufio.NewWriter(w), registrationReference); err != nil {
-							log.Println(err)
-						}
-						return
-					}
-				}
-				if len(next) > 0 {
-					http.Redirect(w, r, fmt.Sprintf("%s?alias=%s&customerId=%s", next[0], alias[0], stripeCustomer.ID), http.StatusFound)
-				}
-				http.Redirect(w, r, "/registered.html", http.StatusFound)
+			if len(alias) == 0 {
+				log.Println("Missing Alias")
+				return
 			}
+			if len(stripeEmail) == 0 {
+				log.Println("Missing Stripe Email")
+				return
+			}
+			if len(stripeToken) == 0 {
+				log.Println("Missing Stripe Token")
+				return
+			}
+
+			customerID, registrationReference, err := callback(alias[0], stripeEmail[0], stripeToken[0])
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			if len(api) > 0 {
+				switch api[0] {
+				case "1":
+					w.Write([]byte(customerID))
+					w.Write([]byte("\n"))
+					return
+				case "2":
+					if err := bcgo.WriteDelimitedProtobuf(bufio.NewWriter(w), registrationReference); err != nil {
+						log.Println(err)
+					}
+					return
+				}
+			}
+			if len(next) > 0 {
+				http.Redirect(w, r, fmt.Sprintf("%s?alias=%s&customerId=%s", next[0], alias[0], customerID), http.StatusFound)
+			}
+			http.Redirect(w, r, "/registered.html", http.StatusFound)
 		default:
 			log.Println("Unsupported method", r.Method)
 		}
 	}
 }
 
-func SubscriptionHandler(aliases *bcgo.Channel, subscriptions *bcgo.Channel, node *bcgo.Node, threshold uint64, listener bcgo.MiningListener, template *template.Template, redirect, productId, planId string) func(w http.ResponseWriter, r *http.Request) {
+func SubscriptionHandler(template *template.Template, redirect string, callback func(string, string) (string, *bcgo.Reference, error)) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path, r.Header)
 		switch r.Method {
@@ -215,78 +174,36 @@ func SubscriptionHandler(aliases *bcgo.Channel, subscriptions *bcgo.Channel, nod
 			alias := r.Form["alias"]
 			customerId := r.Form["customerId"]
 
-			if len(alias) > 0 && len(customerId) > 0 {
-				if err := aliases.Pull(node.Cache, node.Network); err != nil {
-					log.Println(err)
-				}
-
-				// Get rsa.PublicKey for Alias
-				publicKey, err := aliasgo.GetPublicKey(aliases, node.Cache, node.Network, alias[0])
-				if err != nil {
-					log.Println(err)
-					return
-				}
-
-				// Create list of access (user + server)
-				acl := map[string]*rsa.PublicKey{
-					alias[0]:   publicKey,
-					node.Alias: &node.Key.PublicKey,
-				}
-				log.Println("Access", acl)
-
-				stripeSubscription, bcSubscription, err := financego.NewSubscription(node.Alias, alias[0], customerId[0], "", productId, planId)
-				if err != nil {
-					log.Println(err)
-					return
-				}
-				log.Println("StripeSubscription", stripeSubscription)
-				log.Println("BcSubscription", bcSubscription)
-
-				subscriptionData, err := proto.Marshal(bcSubscription)
-				if err != nil {
-					log.Println(err)
-					return
-				}
-
-				if err := subscriptions.Refresh(node.Cache, node.Network); err != nil {
-					log.Println(err)
-				}
-				_, err = node.Write(bcgo.Timestamp(), subscriptions, acl, nil, subscriptionData)
-				if err != nil {
-					log.Println(err)
-					return
-				}
-
-				subscriptionHash, subscriptionBlock, err := node.Mine(subscriptions, threshold, listener)
-				if err != nil {
-					log.Println(err)
-					return
-				}
-				if err := subscriptions.Push(node.Cache, node.Network); err != nil {
-					log.Println(err)
-				}
-				subscriptionReference := &bcgo.Reference{
-					Timestamp:   subscriptionBlock.Timestamp,
-					ChannelName: subscriptionBlock.ChannelName,
-					BlockHash:   subscriptionHash,
-				}
-				log.Println("SubscriptionReference", subscriptionReference)
-
-				if len(api) > 0 {
-					switch api[0] {
-					case "1":
-						w.Write([]byte(stripeSubscription.ID))
-						w.Write([]byte("\n"))
-						return
-					case "2":
-						if err := bcgo.WriteDelimitedProtobuf(bufio.NewWriter(w), subscriptionReference); err != nil {
-							log.Println(err)
-						}
-						return
-					}
-				}
-				http.Redirect(w, r, redirect, http.StatusFound)
+			if len(alias) == 0 {
+				log.Println("Missing Alias")
+				return
 			}
+
+			if len(customerId) == 0 {
+				log.Println("Missing Customer ID")
+				return
+			}
+
+			subscriptionID, subscriptionReference, err := callback(alias[0], customerId[0])
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			if len(api) > 0 {
+				switch api[0] {
+				case "1":
+					w.Write([]byte(subscriptionID))
+					w.Write([]byte("\n"))
+					return
+				case "2":
+					if err := bcgo.WriteDelimitedProtobuf(bufio.NewWriter(w), subscriptionReference); err != nil {
+						log.Println(err)
+					}
+					return
+				}
+			}
+			http.Redirect(w, r, redirect, http.StatusFound)
 		default:
 			log.Println("Unsupported method", r.Method)
 		}
