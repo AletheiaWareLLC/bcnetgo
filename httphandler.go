@@ -71,6 +71,7 @@ func BlockHandler(cache bcgo.Cache, network bcgo.Network, template *template.Tem
 					Signature            string
 					SignatureAlgorithm   string
 					Reference            []TemplateReference
+					Meta                 map[string]string
 				}
 				entries := make([]TemplateEntry, 0)
 				for _, e := range block.Entry {
@@ -102,6 +103,7 @@ func BlockHandler(cache bcgo.Cache, network bcgo.Network, template *template.Tem
 						Signature:            base64.RawURLEncoding.EncodeToString(e.Record.Signature),
 						SignatureAlgorithm:   e.Record.SignatureAlgorithm.String(),
 						Reference:            references,
+						Meta:                 e.Record.Meta,
 					})
 				}
 				data := struct {
