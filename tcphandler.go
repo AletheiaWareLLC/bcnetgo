@@ -56,7 +56,9 @@ func ConnectPortTCPHandler(network *bcgo.TCPNetwork) func(conn net.Conn) {
 			return
 		}
 		log.Println(host, port, string(data[:n]))
-		network.AddPeer(host)
+		if network != nil {
+			network.AddPeer(host)
+		}
 	}
 }
 
@@ -266,7 +268,7 @@ func BroadcastPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork, open fu
 			host, _, err := net.SplitHostPort(conn.RemoteAddr().String())
 			if err != nil {
 				log.Println(err)
-			} else {
+			} else if network != nil {
 				// Add host to network and/or reset error count
 				network.AddPeer(host)
 			}
