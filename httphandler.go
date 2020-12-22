@@ -26,25 +26,22 @@ import (
 	"net/http"
 )
 
-func BlockHandler(cache bcgo.Cache, network bcgo.Network, template *template.Template) func(w http.ResponseWriter, r *http.Request) {
+func BlockHandler(cache bcgo.Cache, template *template.Template) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path, r.Header)
 		switch r.Method {
 		case "GET":
-			channel := netgo.GetQueryParameter(r.URL.Query(), "channel")
-			log.Println("Channel", channel)
-
 			hash := netgo.GetQueryParameter(r.URL.Query(), "hash")
 			log.Println("Hash", hash)
 
-			if len(channel) > 0 && len(hash) > 0 {
+			if len(hash) > 0 {
 				hashBytes, err := base64.RawURLEncoding.DecodeString(hash)
 				if err != nil {
 					log.Println(err)
 					return
 				}
 				// Read block
-				block, err := bcgo.GetBlock(channel, cache, network, hashBytes)
+				block, err := cache.GetBlock(hashBytes)
 				if err != nil {
 					log.Println(err)
 					return
@@ -118,7 +115,7 @@ func BlockHandler(cache bcgo.Cache, network bcgo.Network, template *template.Tem
 				}{
 					Hash:      hash,
 					Timestamp: bcgo.TimestampToString(block.Timestamp),
-					Channel:   channel,
+					Channel:   block.ChannelName,
 					Length:    fmt.Sprintf("%d", block.Length),
 					Previous:  base64.RawURLEncoding.EncodeToString(block.Previous),
 					Miner:     block.Miner,
@@ -138,7 +135,7 @@ func BlockHandler(cache bcgo.Cache, network bcgo.Network, template *template.Tem
 	}
 }
 
-func ChannelHandler(cache bcgo.Cache, network bcgo.Network, template *template.Template) func(w http.ResponseWriter, r *http.Request) {
+func ChannelHandler(cache bcgo.Cache, template *template.Template) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path, r.Header)
 		switch r.Method {
@@ -146,7 +143,7 @@ func ChannelHandler(cache bcgo.Cache, network bcgo.Network, template *template.T
 			channel := netgo.GetQueryParameter(r.URL.Query(), "channel")
 			log.Println("Channel", channel)
 			if len(channel) > 0 {
-				reference, err := bcgo.GetHeadReference(channel, cache, network)
+				reference, err := cache.GetHead(channel)
 				if err != nil {
 					log.Println(err)
 					return
@@ -156,7 +153,7 @@ func ChannelHandler(cache bcgo.Cache, network bcgo.Network, template *template.T
 					Timestamp string
 					Hash      string
 				}{
-					Channel:   channel,
+					Channel:   reference.ChannelName,
 					Timestamp: bcgo.TimestampToString(reference.Timestamp),
 					Hash:      base64.RawURLEncoding.EncodeToString(reference.BlockHash),
 				}
@@ -173,7 +170,7 @@ func ChannelHandler(cache bcgo.Cache, network bcgo.Network, template *template.T
 	}
 }
 
-func ChannelListHandler(cache bcgo.Cache, network bcgo.Network, template *template.Template, list func() []*bcgo.Channel) func(w http.ResponseWriter, r *http.Request) {
+func ChannelListHandler(cache bcgo.Cache, template *template.Template, list func() []*bcgo.Channel) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path, r.Header)
 		switch r.Method {
@@ -185,12 +182,12 @@ func ChannelListHandler(cache bcgo.Cache, network bcgo.Network, template *templa
 			}
 			channels := make([]TemplateChannel, 0)
 			for _, channel := range list() {
-				reference, err := bcgo.GetHeadReference(channel.Name, cache, network)
+				reference, err := cache.GetHead(channel.Name)
 				if err != nil {
 					log.Println(err)
 				} else {
 					channels = append(channels, TemplateChannel{
-						Name:      channel.Name,
+						Name:      reference.ChannelName,
 						Timestamp: bcgo.TimestampToString(reference.Timestamp),
 						Hash:      base64.RawURLEncoding.EncodeToString(reference.BlockHash),
 					})
@@ -211,7 +208,7 @@ func ChannelListHandler(cache bcgo.Cache, network bcgo.Network, template *templa
 	}
 }
 
-func PeriodicValidationHandler(channel *bcgo.Channel, cache bcgo.Cache, network bcgo.Network, template *template.Template) func(w http.ResponseWriter, r *http.Request) {
+func PeriodicValidationHandler(channel *bcgo.Channel, cache bcgo.Cache, template *template.Template) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path, r.Header)
 		switch r.Method {
@@ -227,7 +224,7 @@ func PeriodicValidationHandler(channel *bcgo.Channel, cache bcgo.Cache, network 
 					return
 				}
 			}
-			block, err := bcgo.GetBlock(channel.Name, cache, network, hashBytes)
+			block, err := cache.GetBlock(hashBytes)
 			if err != nil {
 				log.Println(err)
 				return

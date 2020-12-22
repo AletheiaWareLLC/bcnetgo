@@ -27,9 +27,9 @@ func BindAllTCP(c bcgo.Cache, n *bcgo.TCPNetwork, cb func(string) (*bcgo.Channel
 	// Serve Connect Requests
 	go BindTCP(bcgo.PORT_CONNECT, ConnectPortTCPHandler(n))
 	// Serve Block Requests
-	go BindTCP(bcgo.PORT_GET_BLOCK, BlockPortTCPHandler(c, n))
+	go BindTCP(bcgo.PORT_GET_BLOCK, BlockPortTCPHandler(c))
 	// Serve Head Requests
-	go BindTCP(bcgo.PORT_GET_HEAD, HeadPortTCPHandler(c, n))
+	go BindTCP(bcgo.PORT_GET_HEAD, HeadPortTCPHandler(c))
 	// Serve Block Updates
 	go BindTCP(bcgo.PORT_BROADCAST, BroadcastPortTCPHandler(c, n, cb))
 }

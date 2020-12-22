@@ -63,7 +63,7 @@ func ConnectPortTCPHandler(network *bcgo.TCPNetwork) func(conn net.Conn) {
 	}
 }
 
-func BlockPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork) func(conn net.Conn) {
+func BlockPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
 	inflight := make(map[string]bool)
 	mutex := sync.RWMutex{}
 	return func(conn net.Conn) {
@@ -95,7 +95,7 @@ func BlockPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork) func(conn n
 		hash := request.BlockHash
 		if hash != nil && len(hash) > 0 {
 			// Read block
-			block, err := bcgo.GetBlock(request.ChannelName, cache, network, hash)
+			block, err := cache.GetBlock(hash)
 			if err != nil {
 				log.Println(err)
 				return
@@ -107,7 +107,7 @@ func BlockPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork) func(conn n
 				return
 			}
 		} else {
-			reference, err := bcgo.GetHeadReference(request.ChannelName, cache, network)
+			reference, err := cache.GetHead(request.ChannelName)
 			if err != nil {
 				log.Println(err)
 				return
@@ -115,7 +115,7 @@ func BlockPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork) func(conn n
 			hash := request.RecordHash
 			if hash != nil && len(hash) > 0 {
 				// Search through chain until record hash is found, and return the containing block
-				if err := bcgo.Iterate(request.ChannelName, reference.BlockHash, nil, cache, network, func(h []byte, b *bcgo.Block) error {
+				if err := bcgo.Iterate(request.ChannelName, reference.BlockHash, nil, cache, nil, func(h []byte, b *bcgo.Block) error {
 					for _, e := range b.Entry {
 						if bytes.Equal(e.RecordHash, hash) {
 							log.Println("Found record, writing block")
@@ -145,7 +145,7 @@ func BlockPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork) func(conn n
 	}
 }
 
-func HeadPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork) func(conn net.Conn) {
+func HeadPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
 	inflight := make(map[string]bool)
 	mutex := sync.RWMutex{}
 	return func(conn net.Conn) {
@@ -172,7 +172,7 @@ func HeadPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork) func(conn ne
 			inflight[key] = false
 			mutex.Unlock()
 		}()
-		reference, err := bcgo.GetHeadReference(request.ChannelName, cache, network)
+		reference, err := cache.GetHead(request.ChannelName)
 		if err != nil {
 			log.Println(err)
 			return
