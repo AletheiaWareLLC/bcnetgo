@@ -32,7 +32,6 @@ func ConnectPortTCPHandler(network *bcgo.TCPNetwork) func(conn net.Conn) {
 	return func(conn net.Conn) {
 		defer conn.Close()
 		reader := bufio.NewReader(conn)
-		writer := bufio.NewWriter(conn)
 		data := make([]byte, aliasgo.MAX_ALIAS_LENGTH)
 		n, err := reader.Read(data[:])
 		if err != nil {
@@ -43,22 +42,12 @@ func ConnectPortTCPHandler(network *bcgo.TCPNetwork) func(conn net.Conn) {
 			log.Println("Could not read data")
 			return
 		}
-		if _, err = writer.Write(data[:n]); err != nil {
-			log.Println(err)
-			return
-		}
-		if err = writer.Flush(); err != nil {
-			log.Println(err)
-			return
-		}
-		host, port, err := net.SplitHostPort(conn.RemoteAddr().String())
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		log.Println(host, port, string(data[:n]))
+		peer := string(data[:n])
+		log.Println(peer, conn.RemoteAddr().String())
+		// TODO ensure peer is registered Alias
+		// TODO ensure peer is a domain that resolves to conn.RemoteAddr()
 		if network != nil {
-			network.AddPeer(host)
+			network.AddPeer(peer)
 		}
 	}
 }
