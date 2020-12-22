@@ -25,7 +25,17 @@ import (
 	"github.com/AletheiaWareLLC/cryptogo"
 	"net"
 	"testing"
+	"time"
 )
+
+func makeNetwork(t *testing.T) *bcgo.TCPNetwork {
+	t.Helper()
+	return &bcgo.TCPNetwork{
+		Peers:       make(map[string]int),
+		DialTimeout: time.Second,
+		GetTimeout:  time.Second,
+	}
+}
 
 func TestBlockPortTCPHandler(t *testing.T) {
 	t.Run("BlockExists", func(t *testing.T) {
@@ -193,7 +203,8 @@ func TestBroadcastPortTCPHandler(t *testing.T) {
 			return nil, errors.New("No such channel")
 		}
 		cache := bcgo.NewMemoryCache(10)
-		handler := bcnetgo.BroadcastPortTCPHandler(cache, bcgo.NewTCPNetwork(), open)
+		network := makeNetwork(t)
+		handler := bcnetgo.BroadcastPortTCPHandler(cache, network, open)
 		server, client := net.Pipe()
 		defer client.Close()
 
@@ -235,7 +246,8 @@ func TestBroadcastPortTCPHandler(t *testing.T) {
 			}
 			return nil, errors.New("No such channel")
 		}
-		handler := bcnetgo.BroadcastPortTCPHandler(cache, bcgo.NewTCPNetwork(), open)
+		network := makeNetwork(t)
+		handler := bcnetgo.BroadcastPortTCPHandler(cache, network, open)
 		server, client := net.Pipe()
 		defer client.Close()
 
@@ -289,7 +301,8 @@ func TestBroadcastPortTCPHandler(t *testing.T) {
 			}
 			return nil, errors.New("No such channel")
 		}
-		handler := bcnetgo.BroadcastPortTCPHandler(cache, bcgo.NewTCPNetwork(), open)
+		network := makeNetwork(t)
+		handler := bcnetgo.BroadcastPortTCPHandler(cache, network, open)
 		server, client := net.Pipe()
 		defer client.Close()
 
@@ -360,7 +373,8 @@ func TestBroadcastPortTCPHandler(t *testing.T) {
 			}
 			return nil, errors.New("No such channel")
 		}
-		handler := bcnetgo.BroadcastPortTCPHandler(cache, bcgo.NewTCPNetwork(), open)
+		network := makeNetwork(t)
+		handler := bcnetgo.BroadcastPortTCPHandler(cache, network, open)
 		server, client := net.Pipe()
 		defer client.Close()
 
@@ -427,7 +441,8 @@ func TestBroadcastPortTCPHandler(t *testing.T) {
 			}
 			return nil, errors.New("No such channel")
 		}
-		handler := bcnetgo.BroadcastPortTCPHandler(cache, bcgo.NewTCPNetwork(), open)
+		network := makeNetwork(t)
+		handler := bcnetgo.BroadcastPortTCPHandler(cache, network, open)
 		server, client := net.Pipe()
 		defer client.Close()
 

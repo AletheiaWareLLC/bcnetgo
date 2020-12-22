@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/AletheiaWareLLC/aliasgo v1.0.0
-	github.com/AletheiaWareLLC/bcgo v1.0.1-0.20201222161756-6c18c9567944
+	github.com/AletheiaWareLLC/bcgo v1.0.1-0.20201222172728-edf71ec969c7
 	github.com/AletheiaWareLLC/cryptogo v1.0.0
 	github.com/AletheiaWareLLC/financego v1.0.0
 	github.com/AletheiaWareLLC/netgo v1.0.0
