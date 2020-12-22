@@ -20,6 +20,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/base64"
+	"github.com/AletheiaWareLLC/aliasgo"
 	"github.com/AletheiaWareLLC/bcgo"
 	"github.com/AletheiaWareLLC/cryptogo"
 	"log"
@@ -32,7 +33,7 @@ func ConnectPortTCPHandler(network *bcgo.TCPNetwork) func(conn net.Conn) {
 		defer conn.Close()
 		reader := bufio.NewReader(conn)
 		writer := bufio.NewWriter(conn)
-		data := make([]byte, 32)
+		data := make([]byte, aliasgo.MAX_ALIAS_LENGTH)
 		n, err := reader.Read(data[:])
 		if err != nil {
 			log.Println(err)
