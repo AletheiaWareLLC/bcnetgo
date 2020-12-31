@@ -17,10 +17,10 @@
 package bcnetgo
 
 import (
+	"aletheiaware.com/bcgo"
+	"aletheiaware.com/netgo"
 	"encoding/base64"
 	"fmt"
-	"github.com/AletheiaWareLLC/bcgo"
-	"github.com/AletheiaWareLLC/netgo"
 	"html/template"
 	"log"
 	"net/http"

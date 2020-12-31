@@ -17,12 +17,12 @@
 package bcnetgo_test
 
 import (
+	"aletheiaware.com/bcgo"
+	"aletheiaware.com/bcnetgo"
+	"aletheiaware.com/cryptogo"
 	"bufio"
 	"encoding/base64"
 	"errors"
-	"github.com/AletheiaWareLLC/bcgo"
-	"github.com/AletheiaWareLLC/bcnetgo"
-	"github.com/AletheiaWareLLC/cryptogo"
 	"net"
 	"testing"
 	"time"

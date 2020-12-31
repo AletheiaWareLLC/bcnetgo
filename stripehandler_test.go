@@ -17,9 +17,9 @@
 package bcnetgo_test
 
 import (
-	"github.com/AletheiaWareLLC/bcgo"
-	"github.com/AletheiaWareLLC/bcnetgo"
-	"github.com/AletheiaWareLLC/testinggo"
+	"aletheiaware.com/bcgo"
+	"aletheiaware.com/bcnetgo"
+	"aletheiaware.com/testinggo"
 	"html/template"
 	"log"
 	"net/http"

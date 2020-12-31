@@ -17,8 +17,8 @@
 package bcnetgo
 
 import (
+	"aletheiaware.com/bcgo"
 	"fmt"
-	"github.com/AletheiaWareLLC/bcgo"
 	"log"
 	"net"
 )

@@ -17,11 +17,11 @@
 package bcnetgo
 
 import (
+	"aletheiaware.com/bcgo"
+	"aletheiaware.com/financego"
+	"aletheiaware.com/netgo"
 	"bufio"
 	"fmt"
-	"github.com/AletheiaWareLLC/bcgo"
-	"github.com/AletheiaWareLLC/financego"
-	"github.com/AletheiaWareLLC/netgo"
 	"github.com/stripe/stripe-go"
 	"html/template"
 	"io/ioutil"

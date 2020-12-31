@@ -17,12 +17,12 @@
 package bcnetgo
 
 import (
+	"aletheiaware.com/aliasgo"
+	"aletheiaware.com/bcgo"
+	"aletheiaware.com/cryptogo"
 	"bufio"
 	"bytes"
 	"encoding/base64"
-	"github.com/AletheiaWareLLC/aliasgo"
-	"github.com/AletheiaWareLLC/bcgo"
-	"github.com/AletheiaWareLLC/cryptogo"
 	"log"
 	"net"
 	"sync"

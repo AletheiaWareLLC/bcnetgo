@@ -17,7 +17,7 @@
 package bcnetgo_test
 
 import (
-	// "github.com/AletheiaWareLLC/bcnetgo"
+	// "aletheiaware.com/bcnetgo"
 	"net/http"
 	// "net/http/httptest"
 	"testing"
