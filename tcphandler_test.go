@@ -37,6 +37,63 @@ func makeNetwork(t *testing.T) *bcgo.TCPNetwork {
 	}
 }
 
+func TestConnectPortTCPHandler(t *testing.T) {
+	t.Run("Allowed", func(t *testing.T) {
+		expected := "Foobar"
+		var got string
+		network := makeNetwork(t)
+		handler := bcnetgo.ConnectPortTCPHandler(network, func(peer string) bool {
+			got = peer
+			return true // Allowed
+		})
+		server, client := net.Pipe()
+		defer client.Close()
+
+		// Start server in goroutine
+		go handler(server)
+
+		writer := bufio.NewWriter(client)
+		writer.Write([]byte(expected))
+		writer.Flush()
+
+		time.Sleep(time.Second)
+
+		if got != expected {
+			t.Fatalf("Incorrect peer; expected '%s', got '%s'", expected, got)
+		}
+		if _, ok := network.Peers[expected]; !ok {
+			t.Fatalf("Expected peer to be added to network")
+		}
+	})
+	t.Run("Disallowed", func(t *testing.T) {
+		expected := "Foobar"
+		var got string
+		network := makeNetwork(t)
+		handler := bcnetgo.ConnectPortTCPHandler(network, func(peer string) bool {
+			got = peer
+			return false // Disallowed
+		})
+		server, client := net.Pipe()
+		defer client.Close()
+
+		// Start server in goroutine
+		go handler(server)
+
+		writer := bufio.NewWriter(client)
+		writer.Write([]byte(expected))
+		writer.Flush()
+
+		time.Sleep(time.Second)
+
+		if got != expected {
+			t.Fatalf("Incorrect peer; expected '%s', got '%s'", expected, got)
+		}
+		if _, ok := network.Peers[expected]; ok {
+			t.Fatalf("Expected peer to not be added to network")
+		}
+	})
+}
+
 func TestBlockPortTCPHandler(t *testing.T) {
 	t.Run("BlockExists", func(t *testing.T) {
 		serverBlock := &bcgo.Block{

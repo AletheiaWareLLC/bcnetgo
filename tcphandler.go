@@ -28,7 +28,7 @@ import (
 	"sync"
 )
 
-func ConnectPortTCPHandler(network *bcgo.TCPNetwork) func(conn net.Conn) {
+func ConnectPortTCPHandler(network *bcgo.TCPNetwork, allowed func(string) bool) func(conn net.Conn) {
 	return func(conn net.Conn) {
 		defer conn.Close()
 		reader := bufio.NewReader(conn)
@@ -43,11 +43,11 @@ func ConnectPortTCPHandler(network *bcgo.TCPNetwork) func(conn net.Conn) {
 			return
 		}
 		peer := string(data[:n])
-		log.Println(peer, conn.RemoteAddr().String())
-		// TODO ensure peer is registered Alias
-		// TODO ensure peer is a domain that resolves to conn.RemoteAddr()
-		if network != nil {
-			network.AddPeer(peer)
+		if allowed(peer) {
+			log.Println(peer, conn.RemoteAddr().String())
+			if network != nil {
+				network.AddPeer(peer)
+			}
 		}
 	}
 }
