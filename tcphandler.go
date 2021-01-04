@@ -30,21 +30,23 @@ import (
 
 func ConnectPortTCPHandler(network *bcgo.TCPNetwork, allowed func(string) bool) func(conn net.Conn) {
 	return func(conn net.Conn) {
+		address := conn.RemoteAddr().String()
 		defer conn.Close()
 		reader := bufio.NewReader(conn)
 		data := make([]byte, aliasgo.MAX_ALIAS_LENGTH)
 		n, err := reader.Read(data[:])
 		if err != nil {
-			log.Println(err)
+			log.Println(address, err)
 			return
 		}
 		if n <= 0 {
-			log.Println("Could not read data")
+			log.Println(address, "Could not read data")
 			return
 		}
 		peer := string(data[:n])
+		// TODO ensure peer is a domain that resolves to conn.RemoteAddr()
 		if allowed(peer) {
-			log.Println(peer, conn.RemoteAddr().String())
+			log.Println(address, peer)
 			if network != nil {
 				network.AddPeer(peer)
 			}
@@ -56,22 +58,23 @@ func BlockPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
 	inflight := make(map[string]bool)
 	mutex := sync.RWMutex{}
 	return func(conn net.Conn) {
+		address := conn.RemoteAddr().String()
 		defer conn.Close()
 		reader := bufio.NewReader(conn)
 		writer := bufio.NewWriter(conn)
 		request := &bcgo.Reference{}
 		if err := bcgo.ReadDelimitedProtobuf(reader, request); err != nil {
-			log.Println(err)
+			log.Println(address, err)
 			return
 		}
 		blockHash := base64.RawURLEncoding.EncodeToString(request.BlockHash)
 		recordHash := base64.RawURLEncoding.EncodeToString(request.RecordHash)
-		log.Println("Block Request", conn.RemoteAddr(), request.ChannelName, blockHash, recordHash)
+		log.Println(address, "Block Request", conn.RemoteAddr(), request.ChannelName, blockHash, recordHash)
 		key := request.ChannelName + blockHash + recordHash
 		mutex.Lock()
 		if inflight[key] {
 			mutex.Unlock()
-			log.Println("Block Request Already Inflight")
+			log.Println(address, "Block Request Already Inflight")
 			return
 		}
 		inflight[key] = true
@@ -86,19 +89,19 @@ func BlockPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
 			// Read block
 			block, err := cache.GetBlock(hash)
 			if err != nil {
-				log.Println(err)
+				log.Println(address, err)
 				return
 			}
 			// Write to connection
-			log.Println("Writing block")
+			log.Println(address, "Writing block")
 			if err := bcgo.WriteDelimitedProtobuf(writer, block); err != nil {
-				log.Println(err)
+				log.Println(address, err)
 				return
 			}
 		} else {
 			reference, err := cache.GetHead(request.ChannelName)
 			if err != nil {
-				log.Println(err)
+				log.Println(address, err)
 				return
 			}
 			hash := request.RecordHash
@@ -107,7 +110,7 @@ func BlockPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
 				if err := bcgo.Iterate(request.ChannelName, reference.BlockHash, nil, cache, nil, func(h []byte, b *bcgo.Block) error {
 					for _, e := range b.Entry {
 						if bytes.Equal(e.RecordHash, hash) {
-							log.Println("Found record, writing block")
+							log.Println(address, "Found record, writing block")
 							// Write to connection
 							if err := bcgo.WriteDelimitedProtobuf(writer, b); err != nil {
 								return err
@@ -122,12 +125,12 @@ func BlockPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
 						// Do nothing
 						break
 					default:
-						log.Println(err)
+						log.Println(address, err)
 						return
 					}
 				}
 			} else {
-				log.Println("Missing block hash and record hash")
+				log.Println(address, "Missing block hash and record hash")
 				return
 			}
 		}
@@ -138,20 +141,21 @@ func HeadPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
 	inflight := make(map[string]bool)
 	mutex := sync.RWMutex{}
 	return func(conn net.Conn) {
+		address := conn.RemoteAddr().String()
 		defer conn.Close()
 		reader := bufio.NewReader(conn)
 		writer := bufio.NewWriter(conn)
 		request := &bcgo.Reference{}
 		if err := bcgo.ReadDelimitedProtobuf(reader, request); err != nil {
-			log.Println(err)
+			log.Println(address, err)
 			return
 		}
-		log.Println("Head Request", conn.RemoteAddr(), request.ChannelName)
+		log.Println(address, "Head Request", conn.RemoteAddr(), request.ChannelName)
 		key := request.ChannelName
 		mutex.Lock()
 		if inflight[key] {
 			mutex.Unlock()
-			log.Println("Head Request Already Inflight")
+			log.Println(address, "Head Request Already Inflight")
 			return
 		}
 		inflight[key] = true
@@ -163,13 +167,13 @@ func HeadPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
 		}()
 		reference, err := cache.GetHead(request.ChannelName)
 		if err != nil {
-			log.Println(err)
+			log.Println(address, err)
 			return
 		}
 		blockHash := base64.RawURLEncoding.EncodeToString(reference.BlockHash)
-		log.Println("Head Response", reference.ChannelName, blockHash)
+		log.Println(address, "Head Response", reference.ChannelName, blockHash)
 		if err := bcgo.WriteDelimitedProtobuf(writer, reference); err != nil {
-			log.Println(err)
+			log.Println(address, err)
 			return
 		}
 	}
@@ -179,26 +183,27 @@ func BroadcastPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork, open fu
 	inflight := make(map[string]bool)
 	mutex := sync.RWMutex{}
 	return func(conn net.Conn) {
+		address := conn.RemoteAddr().String()
 		defer conn.Close()
 		reader := bufio.NewReader(conn)
 		writer := bufio.NewWriter(conn)
 		block := &bcgo.Block{}
 		if err := bcgo.ReadDelimitedProtobuf(reader, block); err != nil {
-			log.Println(err)
+			log.Println(address, err)
 			return
 		}
 		hash, err := cryptogo.HashProtobuf(block)
 		if err != nil {
-			log.Println(err)
+			log.Println(address, err)
 			return
 		}
 		blockHash := base64.RawURLEncoding.EncodeToString(hash)
-		log.Println("Broadcast", conn.RemoteAddr(), block.ChannelName, blockHash)
+		log.Println(address, "Broadcast", conn.RemoteAddr(), block.ChannelName, blockHash)
 		key := block.ChannelName + blockHash
 		mutex.Lock()
 		if inflight[key] {
 			mutex.Unlock()
-			log.Println("Broadcast Already Inflight")
+			log.Println(address, "Broadcast Already Inflight")
 			return
 		}
 		inflight[key] = true
@@ -210,7 +215,7 @@ func BroadcastPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork, open fu
 		}()
 		channel, err := open(block.ChannelName)
 		if err != nil {
-			log.Println(err)
+			log.Println(address, err)
 			return
 		}
 
@@ -225,21 +230,21 @@ func BroadcastPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork, open fu
 						ChannelName: channel.Name,
 						BlockHash:   h,
 					}); err != nil {
-						log.Println(err)
+						log.Println(address, err)
 						return
 					}
 					b = &bcgo.Block{}
 					if err := bcgo.ReadDelimitedProtobuf(reader, b); err != nil {
-						log.Println(err)
+						log.Println(address, err)
 						return
 					}
 					bh, err := cryptogo.HashProtobuf(b)
 					if err != nil {
-						log.Println(err)
+						log.Println(address, err)
 						return
 					}
 					if !bytes.Equal(h, bh) {
-						log.Println("Got wrong block from broadcaster")
+						log.Println(address, "Got wrong block from broadcaster")
 						return
 					}
 					cache.PutBlock(h, b)
@@ -252,12 +257,12 @@ func BroadcastPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork, open fu
 		}
 
 		if err := channel.Update(cache, network, hash, block); err != nil {
-			log.Println(err)
+			log.Println(address, err)
 			// return - Must send head reference back
 		} else {
 			host, _, err := net.SplitHostPort(conn.RemoteAddr().String())
 			if err != nil {
-				log.Println(err)
+				log.Println(address, err)
 			} else if network != nil {
 				// Add host to network and/or reset error count
 				network.AddPeer(host)
@@ -270,7 +275,7 @@ func BroadcastPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork, open fu
 			ChannelName: channel.Name,
 			BlockHash:   channel.Head,
 		}); err != nil {
-			log.Println(err)
+			log.Println(address, err)
 			return
 		}
 	}
