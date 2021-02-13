@@ -210,13 +210,10 @@ func BroadcastPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork, open fu
 		if err := channel.Update(cache, network, hash, block); err != nil {
 			log.Println(address, err)
 			// return - Must send head reference back
-		} else {
-			host, _, err := net.SplitHostPort(conn.RemoteAddr().String())
-			if err != nil {
-				log.Println(address, err)
-			} else if network != nil {
-				// Add host to network and/or reset error count
-				network.AddPeer(host)
+		} else if network != nil {
+			if peer := network.PeerForAddress(conn.RemoteAddr().String()); peer != "" {
+				// Peer sucessfully updated a channel so reset error count
+				network.AddPeer(peer)
 			}
 		}
 
