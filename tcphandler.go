@@ -25,7 +25,6 @@ import (
 	"encoding/base64"
 	"log"
 	"net"
-	"sync"
 )
 
 func ConnectPortTCPHandler(network *bcgo.TCPNetwork, allowed func(string) bool) func(conn net.Conn) {
@@ -55,8 +54,6 @@ func ConnectPortTCPHandler(network *bcgo.TCPNetwork, allowed func(string) bool) 
 }
 
 func BlockPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
-	inflight := make(map[string]bool)
-	mutex := sync.RWMutex{}
 	return func(conn net.Conn) {
 		address := conn.RemoteAddr().String()
 		defer conn.Close()
@@ -70,20 +67,6 @@ func BlockPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
 		blockHash := base64.RawURLEncoding.EncodeToString(request.BlockHash)
 		recordHash := base64.RawURLEncoding.EncodeToString(request.RecordHash)
 		log.Println(address, "Block Request", conn.RemoteAddr(), request.ChannelName, blockHash, recordHash)
-		key := request.ChannelName + blockHash + recordHash
-		mutex.Lock()
-		if inflight[key] {
-			mutex.Unlock()
-			log.Println(address, "Block Request Already Inflight")
-			return
-		}
-		inflight[key] = true
-		mutex.Unlock()
-		defer func() {
-			mutex.Lock()
-			inflight[key] = false
-			mutex.Unlock()
-		}()
 		hash := request.BlockHash
 		if hash != nil && len(hash) > 0 {
 			// Read block
@@ -138,8 +121,6 @@ func BlockPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
 }
 
 func HeadPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
-	inflight := make(map[string]bool)
-	mutex := sync.RWMutex{}
 	return func(conn net.Conn) {
 		address := conn.RemoteAddr().String()
 		defer conn.Close()
@@ -151,20 +132,6 @@ func HeadPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
 			return
 		}
 		log.Println(address, "Head Request", conn.RemoteAddr(), request.ChannelName)
-		key := request.ChannelName
-		mutex.Lock()
-		if inflight[key] {
-			mutex.Unlock()
-			log.Println(address, "Head Request Already Inflight")
-			return
-		}
-		inflight[key] = true
-		mutex.Unlock()
-		defer func() {
-			mutex.Lock()
-			inflight[key] = false
-			mutex.Unlock()
-		}()
 		reference, err := cache.GetHead(request.ChannelName)
 		if err != nil {
 			log.Println(address, err)
@@ -180,8 +147,6 @@ func HeadPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
 }
 
 func BroadcastPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork, open func(string) (*bcgo.Channel, error)) func(conn net.Conn) {
-	inflight := make(map[string]bool)
-	mutex := sync.RWMutex{}
 	return func(conn net.Conn) {
 		address := conn.RemoteAddr().String()
 		defer conn.Close()
@@ -199,20 +164,6 @@ func BroadcastPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork, open fu
 		}
 		blockHash := base64.RawURLEncoding.EncodeToString(hash)
 		log.Println(address, "Broadcast", conn.RemoteAddr(), block.ChannelName, blockHash)
-		key := block.ChannelName + blockHash
-		mutex.Lock()
-		if inflight[key] {
-			mutex.Unlock()
-			log.Println(address, "Broadcast Already Inflight")
-			return
-		}
-		inflight[key] = true
-		mutex.Unlock()
-		defer func() {
-			mutex.Lock()
-			inflight[key] = false
-			mutex.Unlock()
-		}()
 		channel, err := open(block.ChannelName)
 		if err != nil {
 			log.Println(address, err)
