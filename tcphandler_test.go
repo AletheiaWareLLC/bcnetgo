@@ -31,7 +31,6 @@ import (
 func makeNetwork(t *testing.T) *bcgo.TCPNetwork {
 	t.Helper()
 	return &bcgo.TCPNetwork{
-		Peers:       make(map[string]int),
 		DialTimeout: time.Second,
 		GetTimeout:  time.Second,
 	}
@@ -61,7 +60,13 @@ func TestConnectPortTCPHandler(t *testing.T) {
 		if got != expected {
 			t.Fatalf("Incorrect peer; expected '%s', got '%s'", expected, got)
 		}
-		if _, ok := network.Peers[expected]; !ok {
+		found := false
+		for _, p := range network.Peers() {
+			if p == expected {
+				found = true
+			}
+		}
+		if !found {
 			t.Fatalf("Expected peer to be added to network")
 		}
 	})
@@ -88,7 +93,13 @@ func TestConnectPortTCPHandler(t *testing.T) {
 		if got != expected {
 			t.Fatalf("Incorrect peer; expected '%s', got '%s'", expected, got)
 		}
-		if _, ok := network.Peers[expected]; ok {
+		found := false
+		for _, p := range network.Peers() {
+			if p == expected {
+				found = true
+			}
+		}
+		if found {
 			t.Fatalf("Expected peer to not be added to network")
 		}
 	})
