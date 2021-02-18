@@ -67,7 +67,7 @@ func BlockPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
 		}
 		blockHash := base64.RawURLEncoding.EncodeToString(request.BlockHash)
 		recordHash := base64.RawURLEncoding.EncodeToString(request.RecordHash)
-		log.Println(address, "Block Request", conn.RemoteAddr(), request.ChannelName, blockHash, recordHash)
+		log.Println(address, "Block Request", address, request.ChannelName, blockHash, recordHash)
 		hash := request.BlockHash
 		if hash != nil && len(hash) > 0 {
 			// Read block
@@ -132,7 +132,7 @@ func HeadPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
 			log.Println(address, err)
 			return
 		}
-		log.Println(address, "Head Request", conn.RemoteAddr(), request.ChannelName)
+		log.Println(address, "Head Request", address, request.ChannelName)
 		reference, err := cache.GetHead(request.ChannelName)
 		if err != nil {
 			log.Println(address, err)
@@ -164,7 +164,7 @@ func BroadcastPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork, open fu
 			return
 		}
 		blockHash := base64.RawURLEncoding.EncodeToString(hash)
-		log.Println(address, "Broadcast", conn.RemoteAddr(), block.ChannelName, blockHash)
+		log.Println(address, "Broadcast", address, block.ChannelName, blockHash)
 		channel, err := open(block.ChannelName)
 		if err != nil {
 			log.Println(address, err)
@@ -212,7 +212,7 @@ func BroadcastPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork, open fu
 			log.Println(address, err)
 			// return - Must send head reference back
 		} else if network != nil {
-			if peer := network.PeerForAddress(conn.RemoteAddr().String()); peer != "" {
+			if peer := network.PeerForAddress(address); peer != "" {
 				// Peer sucessfully updated a channel so reset error count
 				network.AddPeer(peer)
 			}
