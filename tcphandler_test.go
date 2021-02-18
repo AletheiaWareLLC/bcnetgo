@@ -41,7 +41,7 @@ func TestConnectPortTCPHandler(t *testing.T) {
 		expected := "Foobar"
 		var got string
 		network := makeNetwork(t)
-		handler := bcnetgo.ConnectPortTCPHandler(network, func(peer string) bool {
+		handler := bcnetgo.ConnectPortTCPHandler(network, func(address, peer string) bool {
 			got = peer
 			return true // Allowed
 		})
@@ -74,7 +74,7 @@ func TestConnectPortTCPHandler(t *testing.T) {
 		expected := "Foobar"
 		var got string
 		network := makeNetwork(t)
-		handler := bcnetgo.ConnectPortTCPHandler(network, func(peer string) bool {
+		handler := bcnetgo.ConnectPortTCPHandler(network, func(address, peer string) bool {
 			got = peer
 			return false // Disallowed
 		})

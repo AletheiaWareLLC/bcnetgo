@@ -25,7 +25,7 @@ import (
 
 func BindAllTCP(c bcgo.Cache, n *bcgo.TCPNetwork, cb func(string) (*bcgo.Channel, error)) {
 	// Serve Connect Requests
-	go BindTCP(bcgo.PORT_CONNECT, ConnectPortTCPHandler(n, func(string) bool {
+	go BindTCP(bcgo.PORT_CONNECT, ConnectPortTCPHandler(n, func(string, string) bool {
 		return false
 	}))
 	// Serve Block Requests

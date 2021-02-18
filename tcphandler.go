@@ -27,7 +27,7 @@ import (
 	"net"
 )
 
-func ConnectPortTCPHandler(network *bcgo.TCPNetwork, allowed func(string) bool) func(conn net.Conn) {
+func ConnectPortTCPHandler(network *bcgo.TCPNetwork, allowed func(string, string) bool) func(conn net.Conn) {
 	return func(conn net.Conn) {
 		address := conn.RemoteAddr().String()
 		defer conn.Close()
@@ -43,12 +43,13 @@ func ConnectPortTCPHandler(network *bcgo.TCPNetwork, allowed func(string) bool) 
 			return
 		}
 		peer := string(data[:n])
-		// TODO ensure peer is a domain that resolves to conn.RemoteAddr()
-		if allowed(peer) {
-			log.Println(address, peer)
-			if network != nil {
-				network.AddPeer(peer)
-			}
+		if !allowed(address, peer) {
+			log.Println(address, peer, "Disallowed")
+			return
+		}
+		log.Println(address, peer, "Connected")
+		if network != nil {
+			network.AddPeer(peer)
 		}
 	}
 }
