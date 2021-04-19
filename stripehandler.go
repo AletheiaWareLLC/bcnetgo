@@ -68,8 +68,8 @@ func RegistrationHandler(merchantAlias, merchantName, merchantKey string, templa
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path, r.Header)
 		switch r.Method {
 		case "GET":
-			alias := netgo.GetQueryParameter(r.URL.Query(), "alias")
-			next := netgo.GetQueryParameter(r.URL.Query(), "next")
+			alias := netgo.QueryParameter(r.URL.Query(), "alias")
+			next := netgo.QueryParameter(r.URL.Query(), "next")
 			log.Println("Alias", alias)
 			log.Println("Next", next)
 
@@ -153,8 +153,8 @@ func SubscriptionHandler(template *template.Template, redirect string, callback 
 		log.Println(r.RemoteAddr, r.Proto, r.Method, r.Host, r.URL.Path, r.Header)
 		switch r.Method {
 		case "GET":
-			alias := netgo.GetQueryParameter(r.URL.Query(), "alias")
-			customerId := netgo.GetQueryParameter(r.URL.Query(), "customerId")
+			alias := netgo.QueryParameter(r.URL.Query(), "alias")
+			customerId := netgo.QueryParameter(r.URL.Query(), "customerId")
 			log.Println("Alias", alias)
 			log.Println("Customer ID", customerId)
 			data := struct {

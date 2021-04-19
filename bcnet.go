@@ -18,22 +18,23 @@ package bcnetgo
 
 import (
 	"aletheiaware.com/bcgo"
+	"aletheiaware.com/bcgo/network"
 	"fmt"
 	"log"
 	"net"
 )
 
-func BindAllTCP(c bcgo.Cache, n *bcgo.TCPNetwork, cb func(string) (*bcgo.Channel, error)) {
+func BindAllTCP(c bcgo.Cache, n *network.TCP, cb func(string) (bcgo.Channel, error)) {
 	// Serve Connect Requests
-	go BindTCP(bcgo.PORT_CONNECT, ConnectPortTCPHandler(n, func(string, string) bool {
+	go BindTCP(network.PORT_CONNECT, ConnectPortTCPHandler(n, func(string, string) bool {
 		return true
 	}))
 	// Serve Block Requests
-	go BindTCP(bcgo.PORT_GET_BLOCK, BlockPortTCPHandler(c))
+	go BindTCP(network.PORT_GET_BLOCK, BlockPortTCPHandler(c))
 	// Serve Head Requests
-	go BindTCP(bcgo.PORT_GET_HEAD, HeadPortTCPHandler(c))
+	go BindTCP(network.PORT_GET_HEAD, HeadPortTCPHandler(c))
 	// Serve Block Updates
-	go BindTCP(bcgo.PORT_BROADCAST, BroadcastPortTCPHandler(c, n, cb))
+	go BindTCP(network.PORT_BROADCAST, BroadcastPortTCPHandler(c, n, cb))
 }
 
 func BindTCP(port int, handler func(net.Conn)) {

@@ -19,6 +19,7 @@ package bcnetgo
 import (
 	"aletheiaware.com/aliasgo"
 	"aletheiaware.com/bcgo"
+	"aletheiaware.com/bcgo/network"
 	"aletheiaware.com/cryptogo"
 	"bufio"
 	"bytes"
@@ -27,7 +28,7 @@ import (
 	"net"
 )
 
-func ConnectPortTCPHandler(network *bcgo.TCPNetwork, allowed func(string, string) bool) func(conn net.Conn) {
+func ConnectPortTCPHandler(network *network.TCP, allowed func(string, string) bool) func(conn net.Conn) {
 	return func(conn net.Conn) {
 		address := conn.RemoteAddr().String()
 		defer conn.Close()
@@ -71,7 +72,7 @@ func BlockPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
 		hash := request.BlockHash
 		if hash != nil && len(hash) > 0 {
 			// Read block
-			block, err := cache.GetBlock(hash)
+			block, err := cache.Block(hash)
 			if err != nil {
 				log.Println(address, err)
 				return
@@ -83,7 +84,7 @@ func BlockPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
 				return
 			}
 		} else {
-			reference, err := cache.GetHead(request.ChannelName)
+			reference, err := cache.Head(request.ChannelName)
 			if err != nil {
 				log.Println(address, err)
 				return
@@ -133,7 +134,7 @@ func HeadPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
 			return
 		}
 		log.Println(address, "Head Request", address, request.ChannelName)
-		reference, err := cache.GetHead(request.ChannelName)
+		reference, err := cache.Head(request.ChannelName)
 		if err != nil {
 			log.Println(address, err)
 			return
@@ -147,7 +148,7 @@ func HeadPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
 	}
 }
 
-func BroadcastPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork, open func(string) (*bcgo.Channel, error)) func(conn net.Conn) {
+func BroadcastPortTCPHandler(cache bcgo.Cache, network *network.TCP, open func(string) (bcgo.Channel, error)) func(conn net.Conn) {
 	return func(conn net.Conn) {
 		address := conn.RemoteAddr().String()
 		defer conn.Close()
@@ -175,11 +176,11 @@ func BroadcastPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork, open fu
 		for b != nil {
 			h := b.Previous
 			if h != nil && len(h) > 0 {
-				b, err = cache.GetBlock(h)
+				b, err = cache.Block(h)
 				if err != nil {
 					// Request block from broadcaster
 					if err := bcgo.WriteDelimitedProtobuf(writer, &bcgo.Reference{
-						ChannelName: channel.Name,
+						ChannelName: channel.Name(),
 						BlockHash:   h,
 					}); err != nil {
 						log.Println(address, err)
@@ -220,9 +221,9 @@ func BroadcastPortTCPHandler(cache bcgo.Cache, network *bcgo.TCPNetwork, open fu
 
 		// Reply with current head
 		if err := bcgo.WriteDelimitedProtobuf(writer, &bcgo.Reference{
-			Timestamp:   channel.Timestamp,
-			ChannelName: channel.Name,
-			BlockHash:   channel.Head,
+			Timestamp:   channel.Timestamp(),
+			ChannelName: channel.Name(),
+			BlockHash:   channel.Head(),
 		}); err != nil {
 			log.Println(address, err)
 			return

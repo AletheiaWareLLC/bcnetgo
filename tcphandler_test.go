@@ -18,6 +18,9 @@ package bcnetgo_test
 
 import (
 	"aletheiaware.com/bcgo"
+	"aletheiaware.com/bcgo/cache"
+	"aletheiaware.com/bcgo/channel"
+	"aletheiaware.com/bcgo/network"
 	"aletheiaware.com/bcnetgo"
 	"aletheiaware.com/cryptogo"
 	"bufio"
@@ -28,9 +31,9 @@ import (
 	"time"
 )
 
-func makeNetwork(t *testing.T) *bcgo.TCPNetwork {
+func makeNetwork(t *testing.T) *network.TCP {
 	t.Helper()
-	return &bcgo.TCPNetwork{
+	return &network.TCP{
 		DialTimeout: time.Second,
 		GetTimeout:  time.Second,
 	}
@@ -117,7 +120,7 @@ func TestBlockPortTCPHandler(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		cache := bcgo.NewMemoryCache(10)
+		cache := cache.NewMemory(10)
 		cache.PutBlock(serverHash, serverBlock)
 		cache.PutHead("Test", &bcgo.Reference{
 			ChannelName: "Test",
@@ -161,7 +164,7 @@ func TestBlockPortTCPHandler(t *testing.T) {
 		}
 	})
 	t.Run("BlockNotExists", func(t *testing.T) {
-		cache := bcgo.NewMemoryCache(10)
+		cache := cache.NewMemory(10)
 		handler := bcnetgo.BlockPortTCPHandler(cache)
 		server, client := net.Pipe()
 		defer client.Close()
@@ -208,7 +211,7 @@ func TestHeadPortTCPHandler(t *testing.T) {
 			ChannelName: "Test",
 			BlockHash:   serverHash,
 		}
-		cache := bcgo.NewMemoryCache(10)
+		cache := cache.NewMemory(10)
 		cache.PutBlock(serverHash, serverBlock)
 		cache.PutHead("Test", serverHead)
 		handler := bcnetgo.HeadPortTCPHandler(cache)
@@ -240,7 +243,7 @@ func TestHeadPortTCPHandler(t *testing.T) {
 		}
 	})
 	t.Run("HeadNotExists", func(t *testing.T) {
-		cache := bcgo.NewMemoryCache(10)
+		cache := cache.NewMemory(10)
 		handler := bcnetgo.HeadPortTCPHandler(cache)
 		server, client := net.Pipe()
 		defer client.Close()
@@ -267,10 +270,10 @@ func TestHeadPortTCPHandler(t *testing.T) {
 
 func TestBroadcastPortTCPHandler(t *testing.T) {
 	t.Run("NoSuchChannel", func(t *testing.T) {
-		open := func(name string) (*bcgo.Channel, error) {
+		open := func(name string) (bcgo.Channel, error) {
 			return nil, errors.New("No such channel")
 		}
-		cache := bcgo.NewMemoryCache(10)
+		cache := cache.NewMemory(10)
 		network := makeNetwork(t)
 		handler := bcnetgo.BroadcastPortTCPHandler(cache, network, open)
 		server, client := net.Pipe()
@@ -306,9 +309,9 @@ func TestBroadcastPortTCPHandler(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		cache := bcgo.NewMemoryCache(10)
-		channel := bcgo.NewChannel("Test")
-		open := func(name string) (*bcgo.Channel, error) {
+		cache := cache.NewMemory(10)
+		channel := channel.New("Test")
+		open := func(name string) (bcgo.Channel, error) {
 			if name == "Test" {
 				return channel, nil
 			}
@@ -361,9 +364,9 @@ func TestBroadcastPortTCPHandler(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		cache := bcgo.NewMemoryCache(10)
-		channel := bcgo.NewChannel("Test")
-		open := func(name string) (*bcgo.Channel, error) {
+		cache := cache.NewMemory(10)
+		channel := channel.New("Test")
+		open := func(name string) (bcgo.Channel, error) {
 			if name == "Test" {
 				return channel, nil
 			}
@@ -425,17 +428,17 @@ func TestBroadcastPortTCPHandler(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		cache := bcgo.NewMemoryCache(10)
+		cache := cache.NewMemory(10)
 		cache.PutBlock(serverHash, serverBlock)
 		cache.PutHead("Test", &bcgo.Reference{
 			ChannelName: "Test",
 			BlockHash:   serverHash,
 		})
-		channel := bcgo.NewChannel("Test")
-		if err := channel.LoadHead(cache, nil); err != nil {
+		channel := channel.New("Test")
+		if err := channel.Load(cache, nil); err != nil {
 			t.Fatal(err)
 		}
-		open := func(name string) (*bcgo.Channel, error) {
+		open := func(name string) (bcgo.Channel, error) {
 			if name == "Test" {
 				return channel, nil
 			}
@@ -492,18 +495,18 @@ func TestBroadcastPortTCPHandler(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		cache := bcgo.NewMemoryCache(10)
+		cache := cache.NewMemory(10)
 		cache.PutBlock(serverHash1, serverBlock1)
 		cache.PutBlock(serverHash2, serverBlock2)
 		cache.PutHead("Test", &bcgo.Reference{
 			ChannelName: "Test",
 			BlockHash:   serverHash2,
 		})
-		channel := bcgo.NewChannel("Test")
-		if err := channel.LoadHead(cache, nil); err != nil {
+		channel := channel.New("Test")
+		if err := channel.Load(cache, nil); err != nil {
 			t.Fatal(err)
 		}
-		open := func(name string) (*bcgo.Channel, error) {
+		open := func(name string) (bcgo.Channel, error) {
 			if name == "Test" {
 				return channel, nil
 			}
