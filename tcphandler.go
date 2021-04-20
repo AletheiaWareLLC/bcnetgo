@@ -100,13 +100,13 @@ func BlockPortTCPHandler(cache bcgo.Cache) func(conn net.Conn) {
 							if err := bcgo.WriteDelimitedProtobuf(writer, b); err != nil {
 								return err
 							}
-							return bcgo.StopIterationError{}
+							return bcgo.ErrStopIteration{}
 						}
 					}
 					return nil
 				}); err != nil {
 					switch err.(type) {
-					case bcgo.StopIterationError:
+					case bcgo.ErrStopIteration:
 						// Do nothing
 						break
 					default:
