@@ -431,6 +431,7 @@ func TestBroadcastPortTCPHandler(t *testing.T) {
 		cache := cache.NewMemory(10)
 		cache.PutBlock(serverHash, serverBlock)
 		cache.PutHead("Test", &bcgo.Reference{
+			Timestamp:   1234,
 			ChannelName: "Test",
 			BlockHash:   serverHash,
 		})
@@ -499,6 +500,7 @@ func TestBroadcastPortTCPHandler(t *testing.T) {
 		cache.PutBlock(serverHash1, serverBlock1)
 		cache.PutBlock(serverHash2, serverBlock2)
 		cache.PutHead("Test", &bcgo.Reference{
+			Timestamp:   5678,
 			ChannelName: "Test",
 			BlockHash:   serverHash2,
 		})
